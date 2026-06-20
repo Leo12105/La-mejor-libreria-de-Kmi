@@ -5,44 +5,102 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>📖 Lector de Libros</title>
+    <meta name="theme-color" content="#6c5ce7">
+    <title>📖 La Biblioteca de Kmi</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body class="theme-light">
 
-    <!-- PANTALLA DE INICIO -->
+    <!-- ==================== PANTALLA DE INICIO ==================== -->
     <div id="home-screen" class="screen active">
+        <div class="animated-bg">
+            <div class="blob blob-1"></div>
+            <div class="blob blob-2"></div>
+            <div class="blob blob-3"></div>
+            <div class="floating-items">
+                <span class="float-item">📖</span>
+                <span class="float-item">✨</span>
+                <span class="float-item">💕</span>
+                <span class="float-item">📚</span>
+                <span class="float-item">🌸</span>
+                <span class="float-item">⭐</span>
+                <span class="float-item">📕</span>
+                <span class="float-item">💫</span>
+                <span class="float-item">🦋</span>
+                <span class="float-item">🌙</span>
+            </div>
+        </div>
+
         <div class="home-container">
             <div class="home-header">
-                <div class="logo-icon">📖</div>
-                <h1>Mi Biblioteca</h1>
-                <p class="subtitle">Tu rincón de lectura personal</p>
+                <div class="logo-wrapper">
+                    <div class="logo-glow"></div>
+                    <div class="logo-icon">📖</div>
+                </div>
+                <h1 class="main-title">
+                    <span class="title-line">La Biblioteca</span>
+                    <span class="title-line title-special">de Kmi</span>
+                </h1>
+                <p class="subtitle">
+                    <span class="heart-pulse">💜</span>
+                    Tu rincón mágico de lectura
+                    <span class="heart-pulse">💜</span>
+                </p>
+                <div class="divider">
+                    <span class="divider-line"></span>
+                    <span class="divider-icon">✦</span>
+                    <span class="divider-line"></span>
+                </div>
             </div>
 
+            <!-- Zona de subida -->
             <div class="upload-area" id="drop-zone">
-                <div class="upload-icon">📚</div>
+                <div class="upload-shine"></div>
+                <div class="upload-icon-wrap">
+                    <div class="upload-icon-bg"></div>
+                    <span class="upload-emoji">📚</span>
+                </div>
                 <h2>Arrastra tu libro aquí</h2>
                 <p>o toca para seleccionar</p>
                 <p class="formats">Formatos: <strong>.epub</strong> y <strong>.pdf</strong></p>
                 <input type="file" id="file-input" accept=".epub,.pdf" hidden>
                 <button class="btn btn-primary" id="btn-select-file">
-                    <span>📂</span> Seleccionar archivo
+                    <span>📂</span>
+                    <span>Seleccionar archivo</span>
+                    <span class="btn-shine"></span>
                 </button>
             </div>
 
-            <div class="recent-books" id="recent-books" style="display:none;">
-                <h3>📕 Libros recientes</h3>
-                <div class="books-grid" id="books-grid"></div>
+            <!-- BIBLIOTECA EPUB -->
+            <div class="library-section" id="epub-library" style="display:none;">
+                <div class="library-header">
+                    <h3><span>📗</span> Libros ePub</h3>
+                    <span class="library-count" id="epub-count">0</span>
+                </div>
+                <div class="books-shelf" id="epub-shelf"></div>
+            </div>
+
+            <!-- BIBLIOTECA PDF -->
+            <div class="library-section" id="pdf-library" style="display:none;">
+                <div class="library-header">
+                    <h3><span>📕</span> Libros PDF</h3>
+                    <span class="library-count" id="pdf-count">0</span>
+                </div>
+                <div class="books-shelf" id="pdf-shelf"></div>
+            </div>
+
+            <div class="home-footer">
+                <p>Hecho con <span class="footer-heart">💜</span> para ti, Kmi</p>
             </div>
         </div>
     </div>
 
-    <!-- PANTALLA DE LECTURA -->
+    <!-- ==================== PANTALLA DE LECTURA ==================== -->
     <div id="reader-screen" class="screen">
-        <!-- Toolbar superior -->
         <div class="toolbar" id="toolbar">
             <div class="toolbar-left">
                 <button class="btn-tool" id="btn-back" title="Volver">
@@ -72,30 +130,23 @@
             </div>
         </div>
 
-        <!-- Zona de lectura con swipe -->
+        <!-- Contenedor del lector con swipe -->
         <div class="reader-wrapper" id="reader-wrapper">
-            <!-- Zonas táctiles invisibles -->
-            <div class="touch-zone touch-left" id="touch-left"></div>
-            <div class="touch-zone touch-right" id="touch-right"></div>
-
-            <!-- Contenido -->
             <div id="reader-content" class="reader-content">
                 <div id="epub-viewer"></div>
                 <canvas id="pdf-canvas"></canvas>
             </div>
-
-            <!-- Animación de paso de página -->
-            <div class="page-turn-overlay" id="page-turn-overlay">
-                <div class="page-turn-page" id="page-turn-page"></div>
+            <!-- Capa de swipe visual -->
+            <div class="swipe-layer" id="swipe-layer">
+                <div class="swipe-page" id="swipe-page"></div>
+                <div class="swipe-shadow" id="swipe-shadow"></div>
             </div>
         </div>
 
-        <!-- Indicador de página -->
         <div class="page-indicator" id="page-indicator">
             <span id="page-info">-</span>
         </div>
 
-        <!-- Barra inferior -->
         <div class="bottom-bar" id="bottom-bar">
             <span class="progress-label" id="progress-label-left">0%</span>
             <input type="range" id="progress-slider" class="progress-slider" min="0" max="100" value="0">
@@ -103,7 +154,9 @@
         </div>
     </div>
 
-    <!-- PANEL DE CAPÍTULOS -->
+    <!-- ==================== PANELES ==================== -->
+
+    <!-- Capítulos -->
     <div class="side-panel" id="chapters-panel">
         <div class="panel-header">
             <h3>📑 Capítulos</h3>
@@ -114,7 +167,7 @@
         <div class="panel-body" id="chapters-list"></div>
     </div>
 
-    <!-- PANEL DE MARCADORES -->
+    <!-- Marcadores -->
     <div class="side-panel" id="bookmarks-panel">
         <div class="panel-header">
             <h3>🔖 Marcadores</h3>
@@ -125,7 +178,7 @@
         <div class="panel-body" id="bookmarks-list"></div>
     </div>
 
-    <!-- PANEL DE TEMAS -->
+    <!-- Temas -->
     <div class="side-panel" id="theme-panel">
         <div class="panel-header">
             <h3>🎨 Apariencia</h3>
@@ -136,43 +189,19 @@
         <div class="panel-body">
             <p class="panel-section-title">Color de página</p>
             <div class="theme-grid">
-                <button class="theme-card" data-theme="theme-light">
-                    <span class="theme-circle" style="background:#ffffff; border:1px solid #ccc;"></span>
-                    <span class="theme-name">Claro</span>
-                </button>
-                <button class="theme-card" data-theme="theme-dark">
-                    <span class="theme-circle" style="background:#1a1a2e;"></span>
-                    <span class="theme-name">Oscuro</span>
-                </button>
-                <button class="theme-card" data-theme="theme-sepia">
-                    <span class="theme-circle" style="background:#f4ecd8;"></span>
-                    <span class="theme-name">Sepia</span>
-                </button>
-                <button class="theme-card" data-theme="theme-old-paper">
-                    <span class="theme-circle" style="background:#d4c5a9; background-image: radial-gradient(circle, rgba(139,119,81,0.3), transparent);"></span>
-                    <span class="theme-name">📜 Antiguo</span>
-                </button>
-                <button class="theme-card" data-theme="theme-green">
-                    <span class="theme-circle" style="background:#e8f5e9;"></span>
-                    <span class="theme-name">🌿 Verde</span>
-                </button>
-                <button class="theme-card" data-theme="theme-blue">
-                    <span class="theme-circle" style="background:#1a237e;"></span>
-                    <span class="theme-name">🌙 Noche</span>
-                </button>
-                <button class="theme-card" data-theme="theme-rose">
-                    <span class="theme-circle" style="background:#fce4ec;"></span>
-                    <span class="theme-name">🌸 Rosa</span>
-                </button>
-                <button class="theme-card" data-theme="theme-cream">
-                    <span class="theme-circle" style="background:#fff8e1;"></span>
-                    <span class="theme-name">🍦 Crema</span>
-                </button>
+                <button class="theme-card" data-theme="theme-light"><span class="theme-circle" style="background:#fff;border:1px solid #ccc;"></span><span class="theme-name">Claro</span></button>
+                <button class="theme-card" data-theme="theme-dark"><span class="theme-circle" style="background:#1a1a2e;"></span><span class="theme-name">Oscuro</span></button>
+                <button class="theme-card" data-theme="theme-sepia"><span class="theme-circle" style="background:#f4ecd8;"></span><span class="theme-name">Sepia</span></button>
+                <button class="theme-card" data-theme="theme-old-paper"><span class="theme-circle" style="background:#d4c5a9;"></span><span class="theme-name">📜 Antiguo</span></button>
+                <button class="theme-card" data-theme="theme-green"><span class="theme-circle" style="background:#e8f5e9;"></span><span class="theme-name">🌿 Verde</span></button>
+                <button class="theme-card" data-theme="theme-blue"><span class="theme-circle" style="background:#1a237e;"></span><span class="theme-name">🌙 Noche</span></button>
+                <button class="theme-card" data-theme="theme-rose"><span class="theme-circle" style="background:#fce4ec;"></span><span class="theme-name">🌸 Rosa</span></button>
+                <button class="theme-card" data-theme="theme-cream"><span class="theme-circle" style="background:#fff8e1;"></span><span class="theme-name">🍦 Crema</span></button>
             </div>
         </div>
     </div>
 
-    <!-- PANEL DE FUENTE -->
+    <!-- Fuente -->
     <div class="side-panel" id="font-panel">
         <div class="panel-header">
             <h3>🔤 Tipografía</h3>
@@ -199,10 +228,7 @@
         </div>
     </div>
 
-    <!-- Overlay -->
     <div class="overlay" id="overlay"></div>
-
-    <!-- Toast mejorado -->
     <div class="toast-container" id="toast-container"></div>
 
     <script src="js/app.js"></script>
