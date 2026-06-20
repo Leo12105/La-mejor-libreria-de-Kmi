@@ -1,0 +1,176 @@
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
+font-family:Georgia, serif;
+overflow-x:hidden;
+background:linear-gradient(
+135deg,
+#1b1337,
+#2f1f55,
+#452f73
+);
+color:white;
+}
+
+.stars{
+position:fixed;
+width:100%;
+height:100%;
+background-image:
+radial-gradient(white 1px, transparent 1px);
+background-size:40px 40px;
+opacity:.25;
+animation:moveStars 30s linear infinite;
+z-index:-1;
+}
+
+@keyframes moveStars{
+from{
+transform:translateY(0);
+}
+to{
+transform:translateY(-500px);
+}
+}
+
+.hero{
+height:100vh;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+text-align:center;
+padding:20px;
+}
+
+.hero h1{
+font-size:4rem;
+color:#ffd6e7;
+animation:fadeUp 1.5s ease;
+}
+
+.welcome{
+margin-top:15px;
+font-size:1.3rem;
+opacity:.9;
+animation:fadeUp 2s ease;
+}
+
+.quote-card{
+margin-top:40px;
+max-width:700px;
+padding:25px;
+border-radius:20px;
+
+background:rgba(255,255,255,.08);
+
+backdrop-filter:blur(10px);
+
+box-shadow:
+0 0 30px rgba(255,255,255,.1);
+
+animation:float 5s infinite ease-in-out;
+}
+
+#quote{
+margin-top:15px;
+font-size:1.2rem;
+font-style:italic;
+}
+
+button{
+margin-top:40px;
+padding:15px 30px;
+border:none;
+border-radius:50px;
+cursor:pointer;
+font-size:1rem;
+background:#c8a2ff;
+color:black;
+font-weight:bold;
+transition:.3s;
+}
+
+button:hover{
+transform:scale(1.1);
+}
+
+@keyframes float{
+50%{
+transform:translateY(-10px);
+}
+}
+
+@keyframes fadeUp{
+from{
+opacity:0;
+transform:translateY(50px);
+}
+to{
+opacity:1;
+transform:translateY(0);
+}
+}
+
+.love-letter{
+max-width:900px;
+margin:auto;
+padding:80px 30px;
+text-align:center;
+line-height:2;
+}
+
+.love-letter h2{
+margin-bottom:30px;
+color:#ffd6e7;
+}
+
+#library{
+padding:60px 20px;
+text-align:center;
+}
+
+.upload-box{
+margin:30px;
+}
+
+.btn{
+display:inline-block;
+margin:10px;
+padding:15px 25px;
+background:#ffd6e7;
+color:black;
+border-radius:15px;
+cursor:pointer;
+font-weight:bold;
+}
+
+input{
+display:none;
+}
+
+#pdfViewer{
+width:90%;
+margin:auto;
+}
+
+#epubViewer{
+width:90%;
+height:700px;
+background:white;
+color:black;
+margin:auto;
+border-radius:20px;
+overflow:hidden;
+margin-top:30px;
+}
+
+canvas{
+max-width:100%;
+margin-top:20px;
+border-radius:10px;
+}
