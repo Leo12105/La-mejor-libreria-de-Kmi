@@ -2,181 +2,208 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>📖 Lector de Libros</title>
     <link rel="stylesheet" href="css/styles.css">
-    <!-- Librería para leer ePub -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
-    <!-- Librería para leer PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body class="theme-light">
 
-    <!-- ========== PANTALLA DE INICIO ========== -->
+    <!-- PANTALLA DE INICIO -->
     <div id="home-screen" class="screen active">
         <div class="home-container">
             <div class="home-header">
-                <h1>📖 Mi Biblioteca</h1>
+                <div class="logo-icon">📖</div>
+                <h1>Mi Biblioteca</h1>
                 <p class="subtitle">Tu rincón de lectura personal</p>
             </div>
 
             <div class="upload-area" id="drop-zone">
                 <div class="upload-icon">📚</div>
                 <h2>Arrastra tu libro aquí</h2>
-                <p>o haz clic para seleccionar</p>
-                <p class="formats">Formatos soportados: <strong>.epub</strong> y <strong>.pdf</strong></p>
+                <p>o toca para seleccionar</p>
+                <p class="formats">Formatos: <strong>.epub</strong> y <strong>.pdf</strong></p>
                 <input type="file" id="file-input" accept=".epub,.pdf" hidden>
-                <button class="btn btn-primary" id="btn-select-file">Seleccionar archivo</button>
+                <button class="btn btn-primary" id="btn-select-file">
+                    <span>📂</span> Seleccionar archivo
+                </button>
             </div>
 
-            <!-- Libros recientes -->
-            <div class="recent-books" id="recent-books">
+            <div class="recent-books" id="recent-books" style="display:none;">
                 <h3>📕 Libros recientes</h3>
                 <div class="books-grid" id="books-grid"></div>
             </div>
         </div>
     </div>
 
-    <!-- ========== PANTALLA DE LECTURA ========== -->
+    <!-- PANTALLA DE LECTURA -->
     <div id="reader-screen" class="screen">
-
-        <!-- Barra superior -->
+        <!-- Toolbar superior -->
         <div class="toolbar" id="toolbar">
             <div class="toolbar-left">
-                <button class="btn-icon" id="btn-back" title="Volver">🏠</button>
-                <span class="book-title" id="current-book-title">Título del libro</span>
-            </div>
-            <div class="toolbar-center">
-                <span class="page-info" id="page-info">Página 1</span>
+                <button class="btn-tool" id="btn-back" title="Volver">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span class="book-title" id="current-book-title">Libro</span>
             </div>
             <div class="toolbar-right">
-                <button class="btn-icon" id="btn-chapters" title="Capítulos">📑</button>
-                <button class="btn-icon" id="btn-bookmarks" title="Marcadores">🔖</button>
-                <button class="btn-icon" id="btn-add-bookmark" title="Añadir marcador">⭐</button>
-                <button class="btn-icon" id="btn-theme" title="Tema">🎨</button>
-                <button class="btn-icon" id="btn-font" title="Fuente">🔤</button>
-                <button class="btn-icon" id="btn-fullscreen" title="Pantalla completa">⛶</button>
+                <button class="btn-tool" id="btn-chapters" title="Capítulos">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+                </button>
+                <button class="btn-tool" id="btn-add-bookmark" title="Marcador">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
+                </button>
+                <button class="btn-tool" id="btn-bookmarks" title="Mis marcadores">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9l-2.5-1.5L14 11V4h5v7z"/></svg>
+                </button>
+                <button class="btn-tool" id="btn-theme" title="Apariencia">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-1-.01-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+                </button>
+                <button class="btn-tool" id="btn-font" title="Fuente">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M9.93 13.5h4.14L12 7.98 9.93 13.5zM20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-4.05 16.5l-1.14-3H9.17l-1.12 3H5.96l5.11-13h1.86l5.11 13h-2.09z"/></svg>
+                </button>
+                <button class="btn-tool" id="btn-fullscreen" title="Pantalla completa">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+                </button>
             </div>
         </div>
 
-        <!-- Área de lectura -->
-        <div class="reader-container" id="reader-container">
-            <!-- Navegación izquierda -->
-            <button class="nav-btn nav-prev" id="btn-prev" title="Página anterior">❮</button>
+        <!-- Zona de lectura con swipe -->
+        <div class="reader-wrapper" id="reader-wrapper">
+            <!-- Zonas táctiles invisibles -->
+            <div class="touch-zone touch-left" id="touch-left"></div>
+            <div class="touch-zone touch-right" id="touch-right"></div>
 
-            <!-- Contenido del libro -->
+            <!-- Contenido -->
             <div id="reader-content" class="reader-content">
-                <!-- ePub se renderiza aquí -->
                 <div id="epub-viewer"></div>
-                <!-- PDF se renderiza aquí -->
-                <canvas id="pdf-canvas" style="display:none;"></canvas>
+                <canvas id="pdf-canvas"></canvas>
             </div>
 
-            <!-- Navegación derecha -->
-            <button class="nav-btn nav-next" id="btn-next" title="Página siguiente">❯</button>
+            <!-- Animación de paso de página -->
+            <div class="page-turn-overlay" id="page-turn-overlay">
+                <div class="page-turn-page" id="page-turn-page"></div>
+            </div>
         </div>
 
-        <!-- Barra inferior con slider -->
+        <!-- Indicador de página -->
+        <div class="page-indicator" id="page-indicator">
+            <span id="page-info">-</span>
+        </div>
+
+        <!-- Barra inferior -->
         <div class="bottom-bar" id="bottom-bar">
+            <span class="progress-label" id="progress-label-left">0%</span>
             <input type="range" id="progress-slider" class="progress-slider" min="0" max="100" value="0">
-            <span id="progress-text" class="progress-text">0%</span>
+            <span class="progress-label" id="progress-label-right">100%</span>
         </div>
     </div>
 
-    <!-- ========== PANEL DE CAPÍTULOS ========== -->
+    <!-- PANEL DE CAPÍTULOS -->
     <div class="side-panel" id="chapters-panel">
         <div class="panel-header">
             <h3>📑 Capítulos</h3>
-            <button class="btn-icon btn-close-panel" id="close-chapters">✕</button>
+            <button class="btn-tool btn-close-panel" id="close-chapters">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
         </div>
-        <div class="panel-content" id="chapters-list"></div>
+        <div class="panel-body" id="chapters-list"></div>
     </div>
 
-    <!-- ========== PANEL DE MARCADORES ========== -->
+    <!-- PANEL DE MARCADORES -->
     <div class="side-panel" id="bookmarks-panel">
         <div class="panel-header">
             <h3>🔖 Marcadores</h3>
-            <button class="btn-icon btn-close-panel" id="close-bookmarks">✕</button>
+            <button class="btn-tool btn-close-panel" id="close-bookmarks">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
         </div>
-        <div class="panel-content" id="bookmarks-list"></div>
+        <div class="panel-body" id="bookmarks-list"></div>
     </div>
 
-    <!-- ========== PANEL DE TEMAS ========== -->
+    <!-- PANEL DE TEMAS -->
     <div class="side-panel" id="theme-panel">
         <div class="panel-header">
             <h3>🎨 Apariencia</h3>
-            <button class="btn-icon btn-close-panel" id="close-theme">✕</button>
+            <button class="btn-tool btn-close-panel" id="close-theme">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
         </div>
-        <div class="panel-content">
-            <h4>Color de página</h4>
-            <div class="theme-options">
-                <button class="theme-btn theme-light-btn" data-theme="theme-light" title="Claro">
-                    <span class="theme-preview" style="background:#ffffff;"></span>
-                    <span>Claro</span>
+        <div class="panel-body">
+            <p class="panel-section-title">Color de página</p>
+            <div class="theme-grid">
+                <button class="theme-card" data-theme="theme-light">
+                    <span class="theme-circle" style="background:#ffffff; border:1px solid #ccc;"></span>
+                    <span class="theme-name">Claro</span>
                 </button>
-                <button class="theme-btn theme-dark-btn" data-theme="theme-dark" title="Oscuro">
-                    <span class="theme-preview" style="background:#1a1a2e;"></span>
-                    <span>Oscuro</span>
+                <button class="theme-card" data-theme="theme-dark">
+                    <span class="theme-circle" style="background:#1a1a2e;"></span>
+                    <span class="theme-name">Oscuro</span>
                 </button>
-                <button class="theme-btn theme-sepia-btn" data-theme="theme-sepia" title="Sepia">
-                    <span class="theme-preview" style="background:#f4ecd8;"></span>
-                    <span>Sepia</span>
+                <button class="theme-card" data-theme="theme-sepia">
+                    <span class="theme-circle" style="background:#f4ecd8;"></span>
+                    <span class="theme-name">Sepia</span>
                 </button>
-                <button class="theme-btn theme-old-btn" data-theme="theme-old-paper" title="Papel antiguo">
-                    <span class="theme-preview" style="background:#d4c5a9;"></span>
-                    <span>📜 Antiguo</span>
+                <button class="theme-card" data-theme="theme-old-paper">
+                    <span class="theme-circle" style="background:#d4c5a9; background-image: radial-gradient(circle, rgba(139,119,81,0.3), transparent);"></span>
+                    <span class="theme-name">📜 Antiguo</span>
                 </button>
-                <button class="theme-btn theme-green-btn" data-theme="theme-green" title="Verde suave">
-                    <span class="theme-preview" style="background:#e8f5e9;"></span>
-                    <span>🌿 Verde</span>
+                <button class="theme-card" data-theme="theme-green">
+                    <span class="theme-circle" style="background:#e8f5e9;"></span>
+                    <span class="theme-name">🌿 Verde</span>
                 </button>
-                <button class="theme-btn theme-blue-btn" data-theme="theme-blue" title="Azul noche">
-                    <span class="theme-preview" style="background:#1a237e;"></span>
-                    <span>🌙 Noche</span>
+                <button class="theme-card" data-theme="theme-blue">
+                    <span class="theme-circle" style="background:#1a237e;"></span>
+                    <span class="theme-name">🌙 Noche</span>
                 </button>
-                <button class="theme-btn theme-rose-btn" data-theme="theme-rose" title="Rosa suave">
-                    <span class="theme-preview" style="background:#fce4ec;"></span>
-                    <span>🌸 Rosa</span>
+                <button class="theme-card" data-theme="theme-rose">
+                    <span class="theme-circle" style="background:#fce4ec;"></span>
+                    <span class="theme-name">🌸 Rosa</span>
                 </button>
-                <button class="theme-btn theme-cream-btn" data-theme="theme-cream" title="Crema">
-                    <span class="theme-preview" style="background:#fff8e1;"></span>
-                    <span>🍦 Crema</span>
+                <button class="theme-card" data-theme="theme-cream">
+                    <span class="theme-circle" style="background:#fff8e1;"></span>
+                    <span class="theme-name">🍦 Crema</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- ========== PANEL DE FUENTE ========== -->
+    <!-- PANEL DE FUENTE -->
     <div class="side-panel" id="font-panel">
         <div class="panel-header">
             <h3>🔤 Tipografía</h3>
-            <button class="btn-icon btn-close-panel" id="close-font">✕</button>
+            <button class="btn-tool btn-close-panel" id="close-font">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
         </div>
-        <div class="panel-content">
-            <h4>Tamaño de fuente</h4>
-            <div class="font-size-controls">
-                <button class="btn btn-secondary" id="font-decrease">A-</button>
-                <span id="font-size-display">16px</span>
-                <button class="btn btn-secondary" id="font-increase">A+</button>
+        <div class="panel-body">
+            <p class="panel-section-title">Tamaño</p>
+            <div class="font-size-row">
+                <button class="btn btn-round" id="font-decrease">A−</button>
+                <span class="font-size-value" id="font-size-display">16px</span>
+                <button class="btn btn-round" id="font-increase">A+</button>
             </div>
-            <h4>Familia de fuente</h4>
-            <div class="font-family-options">
-                <button class="font-btn" data-font="Georgia, serif">Georgia</button>
-                <button class="font-btn" data-font="'Times New Roman', serif">Times New Roman</button>
-                <button class="font-btn" data-font="Arial, sans-serif">Arial</button>
-                <button class="font-btn" data-font="Verdana, sans-serif">Verdana</button>
-                <button class="font-btn" data-font="'Courier New', monospace">Courier New</button>
-                <button class="font-btn" data-font="'Palatino', serif">Palatino</button>
+            <p class="panel-section-title">Tipo de letra</p>
+            <div class="font-list">
+                <button class="font-option" data-font="Georgia, serif" style="font-family:Georgia,serif;">Georgia</button>
+                <button class="font-option" data-font="'Times New Roman', serif" style="font-family:'Times New Roman',serif;">Times New Roman</button>
+                <button class="font-option" data-font="Arial, sans-serif" style="font-family:Arial,sans-serif;">Arial</button>
+                <button class="font-option" data-font="Verdana, sans-serif" style="font-family:Verdana,sans-serif;">Verdana</button>
+                <button class="font-option" data-font="'Courier New', monospace" style="font-family:'Courier New',monospace;">Courier New</button>
+                <button class="font-option" data-font="'Palatino Linotype', serif" style="font-family:'Palatino Linotype',serif;">Palatino</button>
             </div>
         </div>
     </div>
 
-    <!-- Overlay para cerrar paneles -->
+    <!-- Overlay -->
     <div class="overlay" id="overlay"></div>
 
-    <!-- Notificación toast -->
-    <div class="toast" id="toast"></div>
+    <!-- Toast mejorado -->
+    <div class="toast-container" id="toast-container"></div>
 
     <script src="js/app.js"></script>
 </body>
