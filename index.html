@@ -26,11 +26,60 @@ body { background:var(--bg); color:var(--text); touch-action:manipulation; overs
 .theme-light { --bg:#fff;--bg2:#f5f5f5;--text:#333;--text2:#888;--border:#e0e0e0;--reader-bg:#fff;--reader-text:#333;--toolbar-bg:rgba(255,255,255,0.96); }
 .theme-dark { --bg:#1a1a2e;--bg2:#16213e;--text:#e0e0e0;--text2:#777;--border:#2a2a4a;--reader-bg:#1a1a2e;--reader-text:#d4d4d4;--toolbar-bg:rgba(26,26,46,0.96); }
 .theme-sepia { --bg:#f4ecd8;--bg2:#e8dcc8;--text:#5b4636;--text2:#8a7560;--border:#d4c5a9;--reader-bg:#f4ecd8;--reader-text:#5b4636;--toolbar-bg:rgba(244,236,216,0.96); }
-.theme-old-paper { --bg:#d4c5a9;--bg2:#c4b393;--text:#3e2f1c;--text2:#6a5a42;--border:#b8a88a;--reader-bg:#d4c5a9;--reader-text:#3e2f1c;--toolbar-bg:rgba(212,197,169,0.96); }
+.theme-old-paper { --bg:#c89968;--bg2:#a87850;--text:#3a1f0a;--text2:#5a3a1a;--border:#8b5a30;--reader-bg:#c89968;--reader-text:#3a1f0a;--toolbar-bg:rgba(200,153,104,0.96); }
 .theme-green { --bg:#e8f5e9;--bg2:#c8e6c9;--text:#1b5e20;--text2:#4caf50;--border:#a5d6a7;--reader-bg:#e8f5e9;--reader-text:#1b5e20;--toolbar-bg:rgba(232,245,233,0.96); }
 .theme-blue { --bg:#1a237e;--bg2:#283593;--text:#e8eaf6;--text2:#7986cb;--border:#3949ab;--reader-bg:#1a237e;--reader-text:#c5cae9;--toolbar-bg:rgba(26,35,126,0.96); }
 .theme-rose { --bg:#fce4ec;--bg2:#f8bbd0;--text:#880e4f;--text2:#c2185b;--border:#f48fb1;--reader-bg:#fce4ec;--reader-text:#880e4f;--toolbar-bg:rgba(252,228,236,0.96); }
 .theme-cream { --bg:#fff8e1;--bg2:#ffecb3;--text:#4e342e;--text2:#8d6e63;--border:#ffe082;--reader-bg:#fff8e1;--reader-text:#4e342e;--toolbar-bg:rgba(255,248,225,0.96); }
+
+/* PAPEL ANTIGUO - TEXTURA REALISTA */
+.theme-old-paper .reader-wrapper {
+    background:
+        radial-gradient(ellipse at 15% 20%, rgba(80,40,10,0.4) 0%, transparent 25%),
+        radial-gradient(ellipse at 85% 15%, rgba(80,40,10,0.45) 0%, transparent 25%),
+        radial-gradient(ellipse at 10% 85%, rgba(80,40,10,0.5) 0%, transparent 30%),
+        radial-gradient(ellipse at 90% 90%, rgba(80,40,10,0.45) 0%, transparent 28%),
+        radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(80,40,10,0.15) 70%, rgba(60,30,5,0.3) 100%),
+        radial-gradient(circle at 25% 35%, rgba(139,90,40,0.3) 0%, transparent 8%),
+        radial-gradient(circle at 70% 60%, rgba(101,67,33,0.35) 0%, transparent 6%),
+        radial-gradient(circle at 40% 75%, rgba(120,80,40,0.25) 0%, transparent 7%),
+        radial-gradient(circle at 60% 25%, rgba(139,90,40,0.3) 0%, transparent 5%),
+        radial-gradient(circle at 15% 60%, rgba(101,67,33,0.4) 0%, transparent 4%),
+        radial-gradient(circle at 80% 40%, rgba(120,80,40,0.35) 0%, transparent 6%),
+        linear-gradient(135deg, #d4a574 0%, #c89968 25%, #b8854a 50%, #c89968 75%, #d4a574 100%);
+    background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 200px 200px, 150px 150px, 180px 180px, 220px 220px, 160px 160px, 190px 190px, 100% 100%;
+    position: relative;
+}
+.theme-old-paper .reader-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.3 0 0 0 0 0.15 0 0 0 0 0.05 0 0 0 0.4 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.45;
+    pointer-events: none;
+    mix-blend-mode: multiply;
+    z-index: 1;
+}
+.theme-old-paper .reader-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+        linear-gradient(to right, rgba(60,30,5,0.6) 0%, transparent 8%, transparent 92%, rgba(60,30,5,0.6) 100%),
+        linear-gradient(to bottom, rgba(60,30,5,0.5) 0%, transparent 6%, transparent 94%, rgba(60,30,5,0.5) 100%);
+    pointer-events: none;
+    z-index: 2;
+}
+.theme-old-paper #epub-viewer,
+.theme-old-paper #pdf-canvas {
+    position: relative;
+    z-index: 3;
+    mix-blend-mode: multiply;
+}
+.theme-old-paper .reader-content {
+    background: transparent !important;
+}
 
 /* SCREENS */
 .screen { display:none; height:100%; width:100%; position:fixed; top:0; left:0; }
@@ -110,7 +159,6 @@ body { background:var(--bg); color:var(--text); touch-action:manipulation; overs
 .btn-round { width:46px; height:46px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:50%; background:var(--bg2); color:var(--text); border:1.5px solid var(--border); font-size:1.05em; font-weight:700; }
 .btn-round:active { transform:scale(0.9); }
 
-/* LIBRARY */
 .library-section { margin-bottom:28px; animation:fadeInUp 0.7s ease both; }
 .library-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
 .library-header h3 { color:#fff; font-family:'Playfair Display',serif; font-size:1.2em; font-weight:700; display:flex; align-items:center; gap:8px; }
@@ -147,11 +195,23 @@ body { background:var(--bg); color:var(--text); touch-action:manipulation; overs
 /* READER */
 .reader-wrapper { flex:1; position:relative; overflow:hidden; background:var(--reader-bg); }
 .reader-content { width:100%; height:100%; background:var(--reader-bg); color:var(--reader-text); font-size:var(--font-size); font-family:var(--font-family); position:relative; overflow:hidden; }
+.theme-old-paper .reader-content { background: transparent; }
 #epub-viewer { width:100%; height:100%; }
 #pdf-canvas { display:none; max-width:100%; max-height:100%; margin:0 auto; }
 
+/* CAPA INTERCEPTORA DE GESTOS - MUY IMPORTANTE */
+.touch-catcher {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 10;
+    background: transparent;
+    cursor: grab;
+}
+.touch-catcher:active { cursor: grabbing; }
+
 /* SWIPE EFFECT */
-.swipe-layer { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:15; overflow:hidden; perspective:1800px; }
+.swipe-layer { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:20; overflow:hidden; perspective:1800px; }
 .swipe-page { position:absolute; top:0; left:0; width:100%; height:100%; background:var(--reader-bg); display:none; backface-visibility:hidden; box-shadow:0 0 20px rgba(0,0,0,0.2); }
 .swipe-page::before { content:''; position:absolute; top:0; right:0; width:40px; height:100%; background:linear-gradient(to left,rgba(0,0,0,0.08),transparent); pointer-events:none; }
 .swipe-shadow { position:absolute; top:0; width:50px; height:100%; display:none; z-index:5; }
@@ -239,7 +299,6 @@ body { background:var(--bg); color:var(--text); touch-action:manipulation; overs
 </head>
 <body class="theme-light">
 
-<!-- HOME -->
 <div id="home-screen" class="screen active">
     <div class="animated-bg">
         <div class="blob blob-1"></div>
@@ -311,7 +370,6 @@ body { background:var(--bg); color:var(--text); touch-action:manipulation; overs
     </div>
 </div>
 
-<!-- READER -->
 <div id="reader-screen" class="screen">
     <div class="toolbar" id="toolbar">
         <div class="toolbar-left">
@@ -347,6 +405,8 @@ body { background:var(--bg); color:var(--text); touch-action:manipulation; overs
             <div id="epub-viewer"></div>
             <canvas id="pdf-canvas"></canvas>
         </div>
+        <!-- Capa transparente que captura los gestos por encima del iframe -->
+        <div class="touch-catcher" id="touch-catcher"></div>
         <div class="swipe-layer" id="swipe-layer">
             <div class="swipe-page" id="swipe-page"></div>
             <div class="swipe-shadow" id="swipe-shadow"></div>
@@ -364,7 +424,6 @@ body { background:var(--bg); color:var(--text); touch-action:manipulation; overs
     </div>
 </div>
 
-<!-- PANELS -->
 <div class="side-panel" id="chapters-panel">
     <div class="panel-header">
         <h3>📑 Capítulos</h3>
@@ -398,7 +457,7 @@ body { background:var(--bg); color:var(--text); touch-action:manipulation; overs
             <button class="theme-card" data-theme="theme-light"><span class="theme-circle" style="background:#fff;border:1px solid #ccc;"></span><span class="theme-name">Claro</span></button>
             <button class="theme-card" data-theme="theme-dark"><span class="theme-circle" style="background:#1a1a2e;"></span><span class="theme-name">Oscuro</span></button>
             <button class="theme-card" data-theme="theme-sepia"><span class="theme-circle" style="background:#f4ecd8;"></span><span class="theme-name">Sepia</span></button>
-            <button class="theme-card" data-theme="theme-old-paper"><span class="theme-circle" style="background:#d4c5a9;"></span><span class="theme-name">📜 Antiguo</span></button>
+            <button class="theme-card" data-theme="theme-old-paper"><span class="theme-circle" style="background:linear-gradient(135deg,#c89968,#8b5a30);"></span><span class="theme-name">📜 Antiguo</span></button>
             <button class="theme-card" data-theme="theme-green"><span class="theme-circle" style="background:#e8f5e9;"></span><span class="theme-name">🌿 Verde</span></button>
             <button class="theme-card" data-theme="theme-blue"><span class="theme-circle" style="background:#1a237e;"></span><span class="theme-name">🌙 Noche</span></button>
             <button class="theme-card" data-theme="theme-rose"><span class="theme-circle" style="background:#fce4ec;"></span><span class="theme-name">🌸 Rosa</span></button>
@@ -437,32 +496,16 @@ body { background:var(--bg); color:var(--text); touch-action:manipulation; overs
 <div class="toast-container" id="toast-container"></div>
 
 <script>
-// ============================================
-// VARIABLES GLOBALES
-// ============================================
 var state = {
-    currentBook: null,
-    currentBookKey: null,
-    bookType: null,
-    epubBook: null,
-    epubRendition: null,
-    pdfDoc: null,
-    pdfPage: 1,
-    pdfTotal: 0,
-    fontSize: 16,
-    fontFamily: 'Georgia, serif',
+    currentBook: null, currentBookKey: null, bookType: null,
+    epubBook: null, epubRendition: null,
+    pdfDoc: null, pdfPage: 1, pdfTotal: 0,
+    fontSize: 16, fontFamily: 'Georgia, serif',
     currentTheme: 'theme-light',
-    bookmarks: {},
-    library: { epub: [], pdf: [] },
-    isFullscreen: false,
-    barsVisible: true,
-    barsTimer: null,
-    touchStartX: 0,
-    touchStartY: 0,
-    touchCurrentX: 0,
-    touchTracking: false,
-    touchDirection: null,
-    isAnimating: false,
+    bookmarks: {}, library: { epub: [], pdf: [] },
+    isFullscreen: false, barsVisible: true, barsTimer: null,
+    touchStartX: 0, touchStartY: 0, touchCurrentX: 0,
+    touchTracking: false, touchDirection: null, isAnimating: false,
     db: null
 };
 
@@ -470,9 +513,6 @@ if (typeof pdfjsLib !== 'undefined') {
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
 
-// ============================================
-// TOAST
-// ============================================
 function showToast(msg, type) {
     type = type || 'info';
     var c = document.getElementById('toast-container');
@@ -484,9 +524,6 @@ function showToast(msg, type) {
     setTimeout(function() { if (t.parentNode) t.remove(); }, 3200);
 }
 
-// ============================================
-// INDEXEDDB
-// ============================================
 function initDB() {
     return new Promise(function(resolve) {
         try {
@@ -531,16 +568,11 @@ function deleteFileFromDB(key) {
     } catch (e) {}
 }
 
-// ============================================
-// SETTINGS
-// ============================================
 function saveSettings() {
     try {
         localStorage.setItem('kmiReader', JSON.stringify({
-            theme: state.currentTheme,
-            fontSize: state.fontSize,
-            fontFamily: state.fontFamily,
-            bookmarks: state.bookmarks,
+            theme: state.currentTheme, fontSize: state.fontSize,
+            fontFamily: state.fontFamily, bookmarks: state.bookmarks,
             library: state.library
         }));
     } catch (e) {}
@@ -555,21 +587,15 @@ function loadSettings() {
         if (s.bookmarks) state.bookmarks = s.bookmarks;
         if (s.library) state.library = { epub: s.library.epub || [], pdf: s.library.pdf || [] };
     } catch (e) {}
-
     var fsd = document.getElementById('font-size-display');
     if (fsd) fsd.textContent = state.fontSize + 'px';
     document.documentElement.style.setProperty('--font-size', state.fontSize + 'px');
     document.documentElement.style.setProperty('--font-family', state.fontFamily);
 }
 
-// ============================================
-// LIBRARY
-// ============================================
 function addToLibrary(key, name, type) {
     var list = state.library[type];
-    for (var i = 0; i < list.length; i++) {
-        if (list[i].key === key) return;
-    }
+    for (var i = 0; i < list.length; i++) if (list[i].key === key) return;
     list.unshift({ key: key, name: name, date: new Date().toLocaleDateString() });
     if (list.length > 50) list.pop();
     saveSettings();
@@ -596,14 +622,11 @@ function renderLibrary() {
         var shelf = document.getElementById(type + '-shelf');
         var count = document.getElementById(type + '-count');
         if (!section || !shelf) return;
-
         var books = state.library[type] || [];
         if (!books.length) { section.style.display = 'none'; return; }
-
         section.style.display = 'block';
         if (count) count.textContent = books.length;
         shelf.innerHTML = '';
-
         books.forEach(function(book) {
             var card = document.createElement('div');
             card.className = 'book-card';
@@ -615,31 +638,22 @@ function renderLibrary() {
                     '<button class="book-btn book-btn-read">📖 Leer</button>' +
                     '<button class="book-btn book-btn-delete">🗑️</button>' +
                 '</div>';
-
             card.querySelector('.book-btn-read').addEventListener('click', function(e) {
                 e.stopPropagation();
                 openBookFromLibrary(book.key, book.name, type);
             });
             card.querySelector('.book-btn-delete').addEventListener('click', function(e) {
                 e.stopPropagation();
-                if (confirm('¿Eliminar "' + shortName + '"?')) {
-                    removeFromLibrary(book.key, type);
-                }
+                if (confirm('¿Eliminar "' + shortName + '"?')) removeFromLibrary(book.key, type);
             });
             shelf.appendChild(card);
         });
     });
 }
 
-// ============================================
-// FILE HANDLING
-// ============================================
 function handleFile(file) {
     var ext = file.name.split('.').pop().toLowerCase();
-    if (ext !== 'epub' && ext !== 'pdf') {
-        showToast('Formato no soportado', 'error');
-        return;
-    }
+    if (ext !== 'epub' && ext !== 'pdf') { showToast('Formato no soportado', 'error'); return; }
     var reader = new FileReader();
     reader.onload = function(e) {
         var buf = e.target.result;
@@ -671,44 +685,30 @@ function openBook(key, buf, name, type) {
     else openPdf(buf, name);
 }
 
-// ============================================
-// EPUB
-// ============================================
 function openEpub(buf, name) {
     try {
         showToast('Cargando libro...', 'info');
         if (state.epubBook) { try { state.epubBook.destroy(); } catch (e) {} }
-
         document.getElementById('epub-viewer').style.display = 'block';
         document.getElementById('epub-viewer').innerHTML = '';
         document.getElementById('pdf-canvas').style.display = 'none';
-
         showReaderScreen();
-
         setTimeout(function() {
             state.epubBook = ePub(buf);
             var el = document.getElementById('epub-viewer');
             state.epubRendition = state.epubBook.renderTo('epub-viewer', {
-                width: el.clientWidth,
-                height: el.clientHeight,
-                spread: 'none',
-                flow: 'paginated'
+                width: el.clientWidth, height: el.clientHeight,
+                spread: 'none', flow: 'paginated'
             });
-
             applyEpubStyles();
             state.epubRendition.display().then(function() {
                 state.epubBook.loaded.metadata.then(function(meta) {
                     var title = meta.title || name.replace(/\.epub$/i, '');
                     document.getElementById('current-book-title').textContent = title;
                 });
-                state.epubBook.loaded.navigation.then(function(nav) {
-                    renderChapters(nav.toc);
-                });
-                state.epubBook.locations.generate(1024).then(function() {
-                    restorePosition();
-                }).catch(function(){ restorePosition(); });
+                state.epubBook.loaded.navigation.then(function(nav) { renderChapters(nav.toc); });
+                state.epubBook.locations.generate(1024).then(function() { restorePosition(); }).catch(function(){ restorePosition(); });
             });
-
             state.epubRendition.on('relocated', function(loc) {
                 var pct = Math.round((loc.start.percentage || 0) * 100);
                 document.getElementById('progress-slider').value = pct;
@@ -716,30 +716,26 @@ function openEpub(buf, name) {
                 document.getElementById('page-info').textContent = pct + '%';
                 savePosition();
             });
-
             window.addEventListener('resize', function() {
                 if (state.epubRendition) {
                     var e = document.getElementById('epub-viewer');
                     if (e) try { state.epubRendition.resize(e.clientWidth, e.clientHeight); } catch(er){}
                 }
             });
-
             showToast('📖 Libro cargado', 'success');
         }, 200);
-    } catch (err) {
-        console.error(err);
-        showToast('Error al abrir ePub', 'error');
-    }
+    } catch (err) { console.error(err); showToast('Error al abrir ePub', 'error'); }
 }
 
 function applyEpubStyles() {
     if (!state.epubRendition) return;
     var c = getThemeColors();
+    var bg = state.currentTheme === 'theme-old-paper' ? 'transparent' : c.bg;
     try {
         state.epubRendition.themes.default({
-            'html': { 'background': c.bg + ' !important' },
+            'html': { 'background': bg + ' !important' },
             'body': {
-                'background': c.bg + ' !important',
+                'background': bg + ' !important',
                 'color': c.text + ' !important',
                 'font-size': state.fontSize + 'px !important',
                 'font-family': state.fontFamily + ' !important',
@@ -759,7 +755,7 @@ function getThemeColors() {
         'theme-light':     { bg:'#fff', text:'#333' },
         'theme-dark':      { bg:'#1a1a2e', text:'#d4d4d4' },
         'theme-sepia':     { bg:'#f4ecd8', text:'#5b4636' },
-        'theme-old-paper': { bg:'#d4c5a9', text:'#3e2f1c' },
+        'theme-old-paper': { bg:'#c89968', text:'#3a1f0a' },
         'theme-green':     { bg:'#e8f5e9', text:'#1b5e20' },
         'theme-blue':      { bg:'#1a237e', text:'#c5cae9' },
         'theme-rose':      { bg:'#fce4ec', text:'#880e4f' },
@@ -768,15 +764,11 @@ function getThemeColors() {
     return map[state.currentTheme] || map['theme-light'];
 }
 
-// ============================================
-// PDF
-// ============================================
 function openPdf(buf, name) {
     showToast('Cargando PDF...', 'info');
     document.getElementById('epub-viewer').style.display = 'none';
     document.getElementById('pdf-canvas').style.display = 'block';
     showReaderScreen();
-
     setTimeout(function() {
         pdfjsLib.getDocument({ data: buf }).promise.then(function(doc) {
             state.pdfDoc = doc;
@@ -787,10 +779,7 @@ function openPdf(buf, name) {
             restorePosition();
             renderPdfPage(state.pdfPage);
             showToast('📄 PDF cargado · ' + state.pdfTotal + ' págs', 'success');
-        }).catch(function(err) {
-            console.error(err);
-            showToast('Error al abrir PDF', 'error');
-        });
+        }).catch(function(err) { console.error(err); showToast('Error al abrir PDF', 'error'); });
     }, 200);
 }
 
@@ -801,10 +790,8 @@ function renderPdfPage(num) {
         var canvas = document.getElementById('pdf-canvas');
         var ctx = canvas.getContext('2d');
         var wrapper = document.getElementById('reader-wrapper');
-        var maxW = wrapper.clientWidth;
-        var maxH = wrapper.clientHeight;
         var vp0 = page.getViewport({ scale: 1 });
-        var scale = Math.min(maxW / vp0.width, maxH / vp0.height, 2.5);
+        var scale = Math.min(wrapper.clientWidth / vp0.width, wrapper.clientHeight / vp0.height, 2.5);
         var viewport = page.getViewport({ scale: scale });
         canvas.width = viewport.width;
         canvas.height = viewport.height;
@@ -825,10 +812,7 @@ function renderPdfChapters() {
         d.className = 'chapter-item';
         d.textContent = 'Página ' + i;
         (function(n) {
-            d.addEventListener('click', function() {
-                renderPdfPage(n);
-                closeAllPanels();
-            });
+            d.addEventListener('click', function() { renderPdfPage(n); closeAllPanels(); });
         })(i);
         list.appendChild(d);
     }
@@ -837,10 +821,7 @@ function renderPdfChapters() {
 function renderChapters(toc) {
     var list = document.getElementById('chapters-list');
     list.innerHTML = '';
-    if (!toc || !toc.length) {
-        list.innerHTML = '<div class="empty-state">Sin capítulos disponibles</div>';
-        return;
-    }
+    if (!toc || !toc.length) { list.innerHTML = '<div class="empty-state">Sin capítulos disponibles</div>'; return; }
     function build(items, lvl) {
         items.forEach(function(item) {
             var d = document.createElement('div');
@@ -858,9 +839,6 @@ function renderChapters(toc) {
     build(toc, 0);
 }
 
-// ============================================
-// NAVIGATION
-// ============================================
 function doNextPage() {
     if (state.bookType === 'epub' && state.epubRendition) state.epubRendition.next();
     else if (state.bookType === 'pdf' && state.pdfPage < state.pdfTotal) renderPdfPage(state.pdfPage + 1);
@@ -871,18 +849,14 @@ function doPrevPage() {
 }
 function goToProgress(pct) {
     if (state.bookType === 'epub' && state.epubBook) {
-        try {
-            var cfi = state.epubBook.locations.cfiFromPercentage(pct / 100);
-            if (cfi) state.epubRendition.display(cfi);
-        } catch (e) {}
+        try { var cfi = state.epubBook.locations.cfiFromPercentage(pct / 100); if (cfi) state.epubRendition.display(cfi); } catch (e) {}
     } else if (state.bookType === 'pdf') {
-        var pg = Math.max(1, Math.round((pct / 100) * state.pdfTotal));
-        renderPdfPage(pg);
+        renderPdfPage(Math.max(1, Math.round((pct / 100) * state.pdfTotal)));
     }
 }
 
 // ============================================
-// SWIPE
+// SWIPE - VERSIÓN ARREGLADA
 // ============================================
 function onTouchStart(e) {
     if (state.isAnimating) return;
@@ -893,6 +867,7 @@ function onTouchStart(e) {
     state.touchTracking = true;
     state.touchDirection = null;
 }
+
 function onTouchMove(e) {
     if (!state.touchTracking || state.isAnimating) return;
     var t = e.touches[0];
@@ -909,7 +884,42 @@ function onTouchMove(e) {
     var progress = Math.min(Math.abs(dx) / wrapper.clientWidth, 1);
     renderPageTurn(state.touchDirection, progress);
 }
+
 function onTouchEnd() {
+    if (!state.touchTracking || !state.touchDirection) { hidePageTurn(); state.touchTracking = false; return; }
+    state.touchTracking = false;
+    var dx = state.touchCurrentX - state.touchStartX;
+    var wrapper = document.getElementById('reader-wrapper');
+    var progress = Math.abs(dx) / wrapper.clientWidth;
+    if (progress > 0.25) finishPageTurn(state.touchDirection);
+    else revertPageTurn();
+}
+
+// Soporte también para mouse en escritorio
+function onMouseDown(e) {
+    if (state.isAnimating) return;
+    state.touchStartX = e.clientX;
+    state.touchStartY = e.clientY;
+    state.touchCurrentX = e.clientX;
+    state.touchTracking = true;
+    state.touchDirection = null;
+}
+
+function onMouseMove(e) {
+    if (!state.touchTracking || state.isAnimating) return;
+    var dx = e.clientX - state.touchStartX;
+    var dy = e.clientY - state.touchStartY;
+    if (!state.touchDirection) {
+        if (Math.abs(dx) < 10) return;
+        state.touchDirection = dx < 0 ? 'next' : 'prev';
+    }
+    state.touchCurrentX = e.clientX;
+    var wrapper = document.getElementById('reader-wrapper');
+    var progress = Math.min(Math.abs(dx) / wrapper.clientWidth, 1);
+    renderPageTurn(state.touchDirection, progress);
+}
+
+function onMouseUp() {
     if (!state.touchTracking || !state.touchDirection) { hidePageTurn(); state.touchTracking = false; return; }
     state.touchTracking = false;
     var dx = state.touchCurrentX - state.touchStartX;
@@ -932,14 +942,12 @@ function renderPageTurn(direction, progress) {
         page.style.transformOrigin = 'left center';
         page.style.transform = 'perspective(1800px) rotateY(' + (-progress * 180) + 'deg)';
         shadow.style.background = 'linear-gradient(to right, rgba(0,0,0,0.35), transparent)';
-        shadow.style.left = 'auto';
-        shadow.style.right = '0';
+        shadow.style.left = 'auto'; shadow.style.right = '0';
     } else {
         page.style.transformOrigin = 'right center';
         page.style.transform = 'perspective(1800px) rotateY(' + (180 - progress * 180) + 'deg)';
         shadow.style.background = 'linear-gradient(to left, rgba(0,0,0,0.35), transparent)';
-        shadow.style.left = '0';
-        shadow.style.right = 'auto';
+        shadow.style.left = '0'; shadow.style.right = 'auto';
     }
     shadow.style.opacity = progress * 0.7;
 }
@@ -1021,14 +1029,10 @@ function animatePageTurn(direction, callback) {
     }, 520);
 }
 
-// ============================================
-// BOOKMARKS
-// ============================================
 function addBookmark() {
     var k = state.currentBookKey;
     if (!k) return;
     if (!state.bookmarks[k]) state.bookmarks[k] = [];
-
     var data;
     if (state.bookType === 'epub' && state.epubRendition) {
         var loc = state.epubRendition.currentLocation();
@@ -1044,11 +1048,7 @@ function addBookmark() {
             if (state.bookmarks[k][j].page === data.page) { showToast('Ya existe', 'warning'); return; }
         }
     }
-    if (data) {
-        state.bookmarks[k].push(data);
-        saveSettings();
-        showToast('⭐ Marcador guardado', 'success');
-    }
+    if (data) { state.bookmarks[k].push(data); saveSettings(); showToast('⭐ Marcador guardado', 'success'); }
 }
 
 function renderBookmarks() {
@@ -1056,18 +1056,13 @@ function renderBookmarks() {
     var k = state.currentBookKey;
     list.innerHTML = '';
     var marks = state.bookmarks[k] || [];
-    if (!marks.length) {
-        list.innerHTML = '<div class="empty-state">Sin marcadores.<br>Toca ⭐ para añadir.</div>';
-        return;
-    }
+    if (!marks.length) { list.innerHTML = '<div class="empty-state">Sin marcadores.<br>Toca ⭐ para añadir.</div>'; return; }
     marks.forEach(function(bm) {
         var item = document.createElement('div');
         item.className = 'bookmark-item';
         item.innerHTML =
-            '<div class="bookmark-info">' +
-                '<div class="bookmark-title">🔖 ' + bm.label + '</div>' +
-                '<div class="bookmark-page">' + (bm.type === 'pdf' ? 'Página ' + bm.page : bm.page) + '</div>' +
-            '</div>' +
+            '<div class="bookmark-info"><div class="bookmark-title">🔖 ' + bm.label + '</div>' +
+            '<div class="bookmark-page">' + (bm.type === 'pdf' ? 'Página ' + bm.page : bm.page) + '</div></div>' +
             '<button class="bookmark-delete">✕</button>';
         item.querySelector('.bookmark-info').addEventListener('click', function() {
             if (bm.type === 'epub' && state.epubRendition) state.epubRendition.display(bm.cfi);
@@ -1085,9 +1080,6 @@ function renderBookmarks() {
     });
 }
 
-// ============================================
-// THEMES
-// ============================================
 function applyTheme(theme) {
     var wasFS = document.body.classList.contains('fullscreen-mode');
     var showB = document.body.classList.contains('show-bars');
@@ -1104,9 +1096,6 @@ function applyTheme(theme) {
     saveSettings();
 }
 
-// ============================================
-// FONTS
-// ============================================
 function changeFontSize(d) {
     state.fontSize = Math.max(10, Math.min(36, state.fontSize + d));
     document.getElementById('font-size-display').textContent = state.fontSize + 'px';
@@ -1114,6 +1103,7 @@ function changeFontSize(d) {
     if (state.epubRendition) applyEpubStyles();
     saveSettings();
 }
+
 function changeFontFamily(f) {
     state.fontFamily = f;
     document.documentElement.style.setProperty('--font-family', f);
@@ -1126,9 +1116,6 @@ function changeFontFamily(f) {
     saveSettings();
 }
 
-// ============================================
-// FULLSCREEN
-// ============================================
 function toggleFullscreen() {
     if (!state.isFullscreen) {
         var el = document.documentElement;
@@ -1183,9 +1170,6 @@ function toggleBars() {
     }
 }
 
-// ============================================
-// PANELS
-// ============================================
 function togglePanel(id) {
     var p = document.getElementById(id);
     var isOpen = p.classList.contains('open');
@@ -1196,15 +1180,13 @@ function togglePanel(id) {
         if (id === 'bookmarks-panel') renderBookmarks();
     }
 }
+
 function closeAllPanels() {
     var panels = document.querySelectorAll('.side-panel');
     for (var i = 0; i < panels.length; i++) panels[i].classList.remove('open');
     document.getElementById('overlay').classList.remove('active');
 }
 
-// ============================================
-// SCREENS
-// ============================================
 function showReaderScreen() {
     document.getElementById('home-screen').classList.remove('active');
     document.getElementById('reader-screen').classList.add('active');
@@ -1214,8 +1196,7 @@ function goHome() {
     savePosition();
     if (state.epubBook) {
         try { state.epubBook.destroy(); } catch(e) {}
-        state.epubBook = null;
-        state.epubRendition = null;
+        state.epubBook = null; state.epubRendition = null;
     }
     state.pdfDoc = null;
     document.getElementById('epub-viewer').innerHTML = '';
@@ -1231,9 +1212,6 @@ function goHome() {
     closeAllPanels();
 }
 
-// ============================================
-// PERSISTENCE
-// ============================================
 function savePosition() {
     var k = state.currentBookKey;
     if (!k) return;
@@ -1262,16 +1240,11 @@ function restorePosition() {
         if (pos) {
             if (pos.type === 'epub' && state.epubRendition) {
                 try { state.epubRendition.display(pos.cfi); } catch(e) {}
-            } else if (pos.type === 'pdf') {
-                state.pdfPage = pos.page || 1;
-            }
+            } else if (pos.type === 'pdf') state.pdfPage = pos.page || 1;
         }
     } catch(e) {}
 }
 
-// ============================================
-// INIT - VINCULAR EVENTOS
-// ============================================
 function bindEvents() {
     var fileInput = document.getElementById('file-input');
     var dropZone = document.getElementById('drop-zone');
@@ -1293,10 +1266,31 @@ function bindEvents() {
 
     document.getElementById('btn-back').addEventListener('click', goHome);
 
-    var wrapper = document.getElementById('reader-wrapper');
-    wrapper.addEventListener('touchstart', onTouchStart, { passive: true });
-    wrapper.addEventListener('touchmove', onTouchMove, { passive: false });
-    wrapper.addEventListener('touchend', onTouchEnd, { passive: true });
+    // SWIPE EN LA CAPA INTERCEPTORA (no en el wrapper)
+    var catcher = document.getElementById('touch-catcher');
+    catcher.addEventListener('touchstart', onTouchStart, { passive: true });
+    catcher.addEventListener('touchmove', onTouchMove, { passive: false });
+    catcher.addEventListener('touchend', onTouchEnd, { passive: true });
+    catcher.addEventListener('touchcancel', function() {
+        state.touchTracking = false;
+        state.touchDirection = null;
+        hidePageTurn();
+    }, { passive: true });
+
+    // Mouse para escritorio
+    catcher.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+
+    // Tap para mostrar/ocultar barras en fullscreen
+    catcher.addEventListener('click', function(e) {
+        if (state.isFullscreen) {
+            var rect = catcher.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var w = rect.width;
+            if (x > w * 0.3 && x < w * 0.7) toggleBars();
+        }
+    });
 
     document.addEventListener('keydown', function(e) {
         if (!document.getElementById('reader-screen').classList.contains('active')) return;
@@ -1320,32 +1314,17 @@ function bindEvents() {
 
     var themeCards = document.querySelectorAll('.theme-card');
     for (var i = 0; i < themeCards.length; i++) {
-        (function(card) {
-            card.addEventListener('click', function() { applyTheme(card.dataset.theme); });
-        })(themeCards[i]);
+        (function(card) { card.addEventListener('click', function() { applyTheme(card.dataset.theme); }); })(themeCards[i]);
     }
 
     document.getElementById('font-decrease').addEventListener('click', function() { changeFontSize(-2); });
     document.getElementById('font-increase').addEventListener('click', function() { changeFontSize(2); });
     var fontOpts = document.querySelectorAll('.font-option');
     for (var j = 0; j < fontOpts.length; j++) {
-        (function(btn) {
-            btn.addEventListener('click', function() { changeFontFamily(btn.dataset.font); });
-        })(fontOpts[j]);
+        (function(btn) { btn.addEventListener('click', function() { changeFontFamily(btn.dataset.font); }); })(fontOpts[j]);
     }
 
-    document.getElementById('progress-slider').addEventListener('input', function(e) {
-        goToProgress(parseInt(e.target.value));
-    });
-
-    document.getElementById('reader-content').addEventListener('click', function(e) {
-        if (state.isFullscreen) {
-            var rect = e.currentTarget.getBoundingClientRect();
-            var x = e.clientX - rect.left;
-            var w = rect.width;
-            if (x > w * 0.3 && x < w * 0.7) toggleBars();
-        }
-    });
+    document.getElementById('progress-slider').addEventListener('input', function(e) { goToProgress(parseInt(e.target.value)); });
 
     document.addEventListener('fullscreenchange', function() {
         if (!document.fullscreenElement) {
@@ -1355,9 +1334,6 @@ function bindEvents() {
     });
 }
 
-// ============================================
-// START
-// ============================================
 document.addEventListener('DOMContentLoaded', function() {
     initDB().then(function() {
         loadSettings();
