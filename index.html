@@ -1,77 +1,183 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Biblioteca de Kmi</title>
-
-<link rel="stylesheet" href="style.css">
-
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📖 Lector de Libros</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Librería para leer ePub -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+    <!-- Librería para leer PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
+<body class="theme-light">
 
-<body>
+    <!-- ========== PANTALLA DE INICIO ========== -->
+    <div id="home-screen" class="screen active">
+        <div class="home-container">
+            <div class="home-header">
+                <h1>📖 Mi Biblioteca</h1>
+                <p class="subtitle">Tu rincón de lectura personal</p>
+            </div>
 
-<div class="stars"></div>
+            <div class="upload-area" id="drop-zone">
+                <div class="upload-icon">📚</div>
+                <h2>Arrastra tu libro aquí</h2>
+                <p>o haz clic para seleccionar</p>
+                <p class="formats">Formatos soportados: <strong>.epub</strong> y <strong>.pdf</strong></p>
+                <input type="file" id="file-input" accept=".epub,.pdf" hidden>
+                <button class="btn btn-primary" id="btn-select-file">Seleccionar archivo</button>
+            </div>
 
-<section class="hero">
+            <!-- Libros recientes -->
+            <div class="recent-books" id="recent-books">
+                <h3>📕 Libros recientes</h3>
+                <div class="books-grid" id="books-grid"></div>
+            </div>
+        </div>
+    </div>
 
-<div class="hero-content">
+    <!-- ========== PANTALLA DE LECTURA ========== -->
+    <div id="reader-screen" class="screen">
 
-<h1>📚 Biblioteca de Kmi</h1>
+        <!-- Barra superior -->
+        <div class="toolbar" id="toolbar">
+            <div class="toolbar-left">
+                <button class="btn-icon" id="btn-back" title="Volver">🏠</button>
+                <span class="book-title" id="current-book-title">Título del libro</span>
+            </div>
+            <div class="toolbar-center">
+                <span class="page-info" id="page-info">Página 1</span>
+            </div>
+            <div class="toolbar-right">
+                <button class="btn-icon" id="btn-chapters" title="Capítulos">📑</button>
+                <button class="btn-icon" id="btn-bookmarks" title="Marcadores">🔖</button>
+                <button class="btn-icon" id="btn-add-bookmark" title="Añadir marcador">⭐</button>
+                <button class="btn-icon" id="btn-theme" title="Tema">🎨</button>
+                <button class="btn-icon" id="btn-font" title="Fuente">🔤</button>
+                <button class="btn-icon" id="btn-fullscreen" title="Pantalla completa">⛶</button>
+            </div>
+        </div>
 
-<p class="subtitle">
-Un rincón mágico para guardar todas tus historias favoritas
-</p>
+        <!-- Área de lectura -->
+        <div class="reader-container" id="reader-container">
+            <!-- Navegación izquierda -->
+            <button class="nav-btn nav-prev" id="btn-prev" title="Página anterior">❮</button>
 
-<div class="quote-card">
-<h2>✨ Frase del día</h2>
-<p id="quote"></p>
-</div>
+            <!-- Contenido del libro -->
+            <div id="reader-content" class="reader-content">
+                <!-- ePub se renderiza aquí -->
+                <div id="epub-viewer"></div>
+                <!-- PDF se renderiza aquí -->
+                <canvas id="pdf-canvas" style="display:none;"></canvas>
+            </div>
 
-<button id="enterBtn">
-Entrar a la Biblioteca
-</button>
+            <!-- Navegación derecha -->
+            <button class="nav-btn nav-next" id="btn-next" title="Página siguiente">❯</button>
+        </div>
 
-</div>
+        <!-- Barra inferior con slider -->
+        <div class="bottom-bar" id="bottom-bar">
+            <input type="range" id="progress-slider" class="progress-slider" min="0" max="100" value="0">
+            <span id="progress-text" class="progress-text">0%</span>
+        </div>
+    </div>
 
-</section>
+    <!-- ========== PANEL DE CAPÍTULOS ========== -->
+    <div class="side-panel" id="chapters-panel">
+        <div class="panel-header">
+            <h3>📑 Capítulos</h3>
+            <button class="btn-icon btn-close-panel" id="close-chapters">✕</button>
+        </div>
+        <div class="panel-content" id="chapters-list"></div>
+    </div>
 
-<section class="hidden-section" id="librarySection">
+    <!-- ========== PANEL DE MARCADORES ========== -->
+    <div class="side-panel" id="bookmarks-panel">
+        <div class="panel-header">
+            <h3>🔖 Marcadores</h3>
+            <button class="btn-icon btn-close-panel" id="close-bookmarks">✕</button>
+        </div>
+        <div class="panel-content" id="bookmarks-list"></div>
+    </div>
 
-<div class="letter">
+    <!-- ========== PANEL DE TEMAS ========== -->
+    <div class="side-panel" id="theme-panel">
+        <div class="panel-header">
+            <h3>🎨 Apariencia</h3>
+            <button class="btn-icon btn-close-panel" id="close-theme">✕</button>
+        </div>
+        <div class="panel-content">
+            <h4>Color de página</h4>
+            <div class="theme-options">
+                <button class="theme-btn theme-light-btn" data-theme="theme-light" title="Claro">
+                    <span class="theme-preview" style="background:#ffffff;"></span>
+                    <span>Claro</span>
+                </button>
+                <button class="theme-btn theme-dark-btn" data-theme="theme-dark" title="Oscuro">
+                    <span class="theme-preview" style="background:#1a1a2e;"></span>
+                    <span>Oscuro</span>
+                </button>
+                <button class="theme-btn theme-sepia-btn" data-theme="theme-sepia" title="Sepia">
+                    <span class="theme-preview" style="background:#f4ecd8;"></span>
+                    <span>Sepia</span>
+                </button>
+                <button class="theme-btn theme-old-btn" data-theme="theme-old-paper" title="Papel antiguo">
+                    <span class="theme-preview" style="background:#d4c5a9;"></span>
+                    <span>📜 Antiguo</span>
+                </button>
+                <button class="theme-btn theme-green-btn" data-theme="theme-green" title="Verde suave">
+                    <span class="theme-preview" style="background:#e8f5e9;"></span>
+                    <span>🌿 Verde</span>
+                </button>
+                <button class="theme-btn theme-blue-btn" data-theme="theme-blue" title="Azul noche">
+                    <span class="theme-preview" style="background:#1a237e;"></span>
+                    <span>🌙 Noche</span>
+                </button>
+                <button class="theme-btn theme-rose-btn" data-theme="theme-rose" title="Rosa suave">
+                    <span class="theme-preview" style="background:#fce4ec;"></span>
+                    <span>🌸 Rosa</span>
+                </button>
+                <button class="theme-btn theme-cream-btn" data-theme="theme-cream" title="Crema">
+                    <span class="theme-preview" style="background:#fff8e1;"></span>
+                    <span>🍦 Crema</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
-<h2>💌 Para Kmi</h2>
+    <!-- ========== PANEL DE FUENTE ========== -->
+    <div class="side-panel" id="font-panel">
+        <div class="panel-header">
+            <h3>🔤 Tipografía</h3>
+            <button class="btn-icon btn-close-panel" id="close-font">✕</button>
+        </div>
+        <div class="panel-content">
+            <h4>Tamaño de fuente</h4>
+            <div class="font-size-controls">
+                <button class="btn btn-secondary" id="font-decrease">A-</button>
+                <span id="font-size-display">16px</span>
+                <button class="btn btn-secondary" id="font-increase">A+</button>
+            </div>
+            <h4>Familia de fuente</h4>
+            <div class="font-family-options">
+                <button class="font-btn" data-font="Georgia, serif">Georgia</button>
+                <button class="font-btn" data-font="'Times New Roman', serif">Times New Roman</button>
+                <button class="font-btn" data-font="Arial, sans-serif">Arial</button>
+                <button class="font-btn" data-font="Verdana, sans-serif">Verdana</button>
+                <button class="font-btn" data-font="'Courier New', monospace">Courier New</button>
+                <button class="font-btn" data-font="'Palatino', serif">Palatino</button>
+            </div>
+        </div>
+    </div>
 
-<p>
-Cada libro abre una puerta a un mundo diferente.
-Quise regalarte un lugar donde puedas guardar todas esas aventuras,
-porque sé cuánto amas perderte entre páginas.
-</p>
+    <!-- Overlay para cerrar paneles -->
+    <div class="overlay" id="overlay"></div>
 
-</div>
+    <!-- Notificación toast -->
+    <div class="toast" id="toast"></div>
 
-<h2 class="shelf-title">
-📖 Mi Biblioteca
-</h2>
-
-<div class="controls">
-
-<input type="file" id="bookInput" accept=".pdf,.epub">
-
-<label for="bookInput" class="upload-btn">
-➕ Añadir Libro
-</label>
-
-</div>
-
-<div id="bookshelf" class="bookshelf">
-
-</div>
-
-</section>
-
-<script src="script.js"></script>
-
+    <script src="js/app.js"></script>
 </body>
 </html>
