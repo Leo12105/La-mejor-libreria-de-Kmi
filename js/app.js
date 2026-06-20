@@ -1,5 +1,5 @@
 /* ============================================
-   LA BIBLIOTECA DE KMI - v3.0
+   LA BIBLIOTECA DE KMI - v3.1 (corregida)
    ============================================ */
 
 class BookReader {
@@ -21,61 +21,69 @@ class BookReader {
         this.barsVisible = true;
         this.barsTimer = null;
 
-        // Swipe state
-        this.swipeActive = false;
-        this.swipeStartX = 0;
-        this.swipeStartY = 0;
-        this.swipeCurrentX = 0;
-        this.swipeLocked = false;
-        this.swipeDirection = null;
-        this.pageAnimating = false;
+        // Swipe
+        this.touchStartX = 0;
+        this.touchStartY = 0;
+        this.touchCurrentX = 0;
+        this.touchTracking = false;
+        this.touchDirection = null;
+        this.isAnimating = false;
 
-        // File storage (IndexedDB)
         this.db = null;
 
-        pdfjsLib.GlobalWorkerOptions.workerSrc =
-            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc =
+                'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
 
-        this.initDB().then(() => this.init());
+        this.initDB().then(() => this.init()).catch(() => this.init());
     }
 
     // ============================================
-    // INDEXEDDB para guardar archivos
+    // INDEXEDDB
     // ============================================
     initDB() {
-        return new Promise((resolve, reject) => {
-            const req = indexedDB.open('KmiLibrary', 1);
-            req.onupgradeneeded = e => {
-                const db = e.target.result;
-                if (!db.objectStoreNames.contains('books')) {
-                    db.createObjectStore('books', { keyPath: 'key' });
-                }
-            };
-            req.onsuccess = e => { this.db = e.target.result; resolve(); };
-            req.onerror = () => resolve(); // continuar sin DB
+        return new Promise((resolve) => {
+            try {
+                const req = indexedDB.open('KmiLibrary', 1);
+                req.onupgradeneeded = e => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('books')) {
+                        db.createObjectStore('books', { keyPath: 'key' });
+                    }
+                };
+                req.onsuccess = e => { this.db = e.target.result; resolve(); };
+                req.onerror = () => resolve();
+            } catch (e) { resolve(); }
         });
     }
 
     saveFileToDB(key, arrayBuffer, name, type) {
         if (!this.db) return;
-        const tx = this.db.transaction('books', 'readwrite');
-        tx.objectStore('books').put({ key, data: arrayBuffer, name, type });
+        try {
+            const tx = this.db.transaction('books', 'readwrite');
+            tx.objectStore('books').put({ key, data: arrayBuffer, name, type });
+        } catch (e) { console.warn('DB save error', e); }
     }
 
     loadFileFromDB(key) {
         return new Promise((resolve) => {
             if (!this.db) return resolve(null);
-            const tx = this.db.transaction('books', 'readonly');
-            const req = tx.objectStore('books').get(key);
-            req.onsuccess = () => resolve(req.result || null);
-            req.onerror = () => resolve(null);
+            try {
+                const tx = this.db.transaction('books', 'readonly');
+                const req = tx.objectStore('books').get(key);
+                req.onsuccess = () => resolve(req.result || null);
+                req.onerror = () => resolve(null);
+            } catch (e) { resolve(null); }
         });
     }
 
     deleteFileFromDB(key) {
         if (!this.db) return;
-        const tx = this.db.transaction('books', 'readwrite');
-        tx.objectStore('books').delete(key);
+        try {
+            const tx = this.db.transaction('books', 'readwrite');
+            tx.objectStore('books').delete(key);
+        } catch (e) {}
     }
 
     // ============================================
@@ -93,6 +101,7 @@ class BookReader {
     // ============================================
     showToast(msg, type = 'info') {
         const c = document.getElementById('toast-container');
+        if (!c) return;
         const t = document.createElement('div');
         t.className = `toast-item ${type}`;
         t.textContent = msg;
@@ -106,32 +115,39 @@ class BookReader {
     bindEvents() {
         const fileInput = document.getElementById('file-input');
         const dropZone = document.getElementById('drop-zone');
+        const btnSelect = document.getElementById('btn-select-file');
 
-        document.getElementById('btn-select-file').addEventListener('click', e => {
+        if (btnSelect) btnSelect.addEventListener('click', e => {
             e.stopPropagation();
             fileInput.click();
         });
-        dropZone.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', e => {
+
+        if (dropZone) {
+            dropZone.addEventListener('click', () => fileInput.click());
+            dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+            dropZone.addEventListener('drop', e => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+                if (e.dataTransfer.files[0]) this.handleFile(e.dataTransfer.files[0]);
+            });
+        }
+
+        if (fileInput) fileInput.addEventListener('change', e => {
             if (e.target.files[0]) this.handleFile(e.target.files[0]);
             fileInput.value = '';
         });
 
-        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-        dropZone.addEventListener('drop', e => {
-            e.preventDefault();
-            dropZone.classList.remove('drag-over');
-            if (e.dataTransfer.files[0]) this.handleFile(e.dataTransfer.files[0]);
-        });
-
         document.getElementById('btn-back').addEventListener('click', () => this.goHome());
 
-        // ===== SWIPE =====
+        // SWIPE en el reader
         const wrapper = document.getElementById('reader-wrapper');
-        wrapper.addEventListener('touchstart', e => this.handleTouchStart(e), { passive: true });
-        wrapper.addEventListener('touchmove', e => this.handleTouchMove(e), { passive: false });
-        wrapper.addEventListener('touchend', e => this.handleTouchEnd(e), { passive: true });
+        if (wrapper) {
+            wrapper.addEventListener('touchstart', e => this.onTouchStart(e), { passive: true });
+            wrapper.addEventListener('touchmove', e => this.onTouchMove(e), { passive: false });
+            wrapper.addEventListener('touchend', e => this.onTouchEnd(e), { passive: true });
+            wrapper.addEventListener('touchcancel', () => this.cancelTouch(), { passive: true });
+        }
 
         // Teclado
         document.addEventListener('keydown', e => this.onKeyDown(e));
@@ -144,8 +160,9 @@ class BookReader {
         document.getElementById('btn-font').addEventListener('click', () => this.togglePanel('font-panel'));
         document.getElementById('btn-fullscreen').addEventListener('click', () => this.toggleFullscreen());
 
-        ['close-chapters','close-bookmarks','close-theme','close-font'].forEach(id => {
-            document.getElementById(id).addEventListener('click', () => this.closeAllPanels());
+        ['close-chapters', 'close-bookmarks', 'close-theme', 'close-font'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('click', () => this.closeAllPanels());
         });
         document.getElementById('overlay').addEventListener('click', () => this.closeAllPanels());
 
@@ -159,12 +176,12 @@ class BookReader {
             btn.addEventListener('click', () => this.changeFontFamily(btn.dataset.font));
         });
 
-        document.getElementById('progress-slider').addEventListener('input', e => {
-            this.goToProgress(parseInt(e.target.value));
-        });
+        const slider = document.getElementById('progress-slider');
+        if (slider) slider.addEventListener('input', e => this.goToProgress(parseInt(e.target.value)));
 
-        // Tap central para fullscreen bars
-        document.getElementById('reader-content').addEventListener('click', e => {
+        // Click central en fullscreen
+        const readerContent = document.getElementById('reader-content');
+        if (readerContent) readerContent.addEventListener('click', e => {
             if (this.isFullscreen) {
                 const rect = e.currentTarget.getBoundingClientRect();
                 const x = e.clientX - rect.left;
@@ -182,115 +199,104 @@ class BookReader {
     }
 
     // ============================================
-    // SWIPE REALISTA CON EFECTO DE PÁGINA
+    // SWIPE
     // ============================================
-    handleTouchStart(e) {
-        if (this.pageAnimating) return;
+    onTouchStart(e) {
+        if (this.isAnimating) return;
         const t = e.touches[0];
-        this.swipeStartX = t.clientX;
-        this.swipeStartY = t.clientY;
-        this.swipeCurrentX = t.clientX;
-        this.swipeActive = true;
-        this.swipeLocked = false;
-        this.swipeDirection = null;
+        this.touchStartX = t.clientX;
+        this.touchStartY = t.clientY;
+        this.touchCurrentX = t.clientX;
+        this.touchTracking = true;
+        this.touchDirection = null;
     }
 
-    handleTouchMove(e) {
-        if (!this.swipeActive || this.pageAnimating) return;
+    onTouchMove(e) {
+        if (!this.touchTracking || this.isAnimating) return;
 
         const t = e.touches[0];
-        const dx = t.clientX - this.swipeStartX;
-        const dy = t.clientY - this.swipeStartY;
+        const dx = t.clientX - this.touchStartX;
+        const dy = t.clientY - this.touchStartY;
 
-        // Lock direction after 10px
-        if (!this.swipeLocked && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
-            this.swipeLocked = true;
+        // Determinar dirección con cierto threshold
+        if (!this.touchDirection) {
+            if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
             if (Math.abs(dy) > Math.abs(dx)) {
-                // Vertical - cancel
-                this.swipeActive = false;
+                this.touchTracking = false;
                 return;
             }
-            this.swipeDirection = dx < 0 ? 'next' : 'prev';
+            this.touchDirection = dx < 0 ? 'next' : 'prev';
         }
-
-        if (!this.swipeLocked) return;
 
         e.preventDefault();
-        this.swipeCurrentX = t.clientX;
+        this.touchCurrentX = t.clientX;
 
         const wrapper = document.getElementById('reader-wrapper');
-        const progress = Math.abs(dx) / wrapper.clientWidth;
-        this.renderSwipeVisual(this.swipeDirection, Math.min(progress, 1));
+        const progress = Math.min(Math.abs(dx) / wrapper.clientWidth, 1);
+        this.renderPageTurn(this.touchDirection, progress);
     }
 
-    handleTouchEnd(e) {
-        if (!this.swipeActive || !this.swipeLocked || this.pageAnimating) {
-            this.swipeActive = false;
+    onTouchEnd() {
+        if (!this.touchTracking || !this.touchDirection) {
+            this.cancelTouch();
             return;
         }
+        this.touchTracking = false;
 
-        this.swipeActive = false;
-
-        const dx = this.swipeCurrentX - this.swipeStartX;
+        const dx = this.touchCurrentX - this.touchStartX;
         const wrapper = document.getElementById('reader-wrapper');
         const progress = Math.abs(dx) / wrapper.clientWidth;
 
-        if (progress > 0.2) {
-            // Completar animación
-            this.completeSwipe(this.swipeDirection);
+        if (progress > 0.25) {
+            this.finishPageTurn(this.touchDirection);
         } else {
-            // Cancelar
-            this.cancelSwipe();
+            this.revertPageTurn();
         }
     }
 
-    renderSwipeVisual(direction, progress) {
+    cancelTouch() {
+        this.touchTracking = false;
+        this.touchDirection = null;
+        this.hidePageTurn();
+    }
+
+    renderPageTurn(direction, progress) {
         const page = document.getElementById('swipe-page');
         const shadow = document.getElementById('swipe-shadow');
-        const wrapper = document.getElementById('reader-wrapper');
-        const w = wrapper.clientWidth;
+        if (!page || !shadow) return;
+
+        const bg = getComputedStyle(document.documentElement).getPropertyValue('--reader-bg').trim() || '#fff';
 
         page.style.display = 'block';
         shadow.style.display = 'block';
-        page.style.background = getComputedStyle(document.documentElement).getPropertyValue('--reader-bg').trim();
+        page.style.background = bg;
         page.style.transition = 'none';
+        shadow.style.transition = 'none';
+        page.style.left = '0';
+        page.style.width = '100%';
+        page.style.height = '100%';
+        page.style.top = '0';
 
         if (direction === 'next') {
-            // Página se levanta desde la derecha, gira hacia la izquierda
             page.style.transformOrigin = 'left center';
-            const angle = progress * 180;
-            page.style.left = '0';
-            page.style.right = 'auto';
-            page.style.width = '100%';
-            page.style.transform = `perspective(1800px) rotateY(${-angle}deg)`;
-
-            // Sombra
-            shadow.style.left = (w * (1 - progress * 0.5)) + 'px';
-            shadow.style.opacity = progress * 0.6;
-            shadow.style.background = 'linear-gradient(to right, rgba(0,0,0,0.3), transparent)';
+            page.style.transform = `perspective(1800px) rotateY(${-progress * 180}deg)`;
+            shadow.style.background = 'linear-gradient(to right, rgba(0,0,0,0.35), transparent)';
+            shadow.style.opacity = progress * 0.7;
         } else {
-            // Página viene desde la izquierda
             page.style.transformOrigin = 'right center';
-            const angle = 180 - (progress * 180);
-            page.style.left = '0';
-            page.style.right = 'auto';
-            page.style.width = '100%';
-            page.style.transform = `perspective(1800px) rotateY(${angle}deg)`;
-
-            // Sombra
-            shadow.style.left = (w * progress * 0.5) - 50 + 'px';
-            shadow.style.opacity = progress * 0.6;
-            shadow.style.background = 'linear-gradient(to left, rgba(0,0,0,0.3), transparent)';
+            page.style.transform = `perspective(1800px) rotateY(${180 - progress * 180}deg)`;
+            shadow.style.background = 'linear-gradient(to left, rgba(0,0,0,0.35), transparent)';
+            shadow.style.opacity = progress * 0.7;
         }
     }
 
-    completeSwipe(direction) {
-        this.pageAnimating = true;
+    finishPageTurn(direction) {
+        this.isAnimating = true;
         const page = document.getElementById('swipe-page');
         const shadow = document.getElementById('swipe-shadow');
 
-        page.style.transition = 'transform 0.35s ease-in';
-        shadow.style.transition = 'opacity 0.35s ease-in';
+        page.style.transition = 'transform 0.35s ease-out';
+        shadow.style.transition = 'opacity 0.35s ease-out';
 
         if (direction === 'next') {
             page.style.transform = 'perspective(1800px) rotateY(-180deg)';
@@ -300,37 +306,91 @@ class BookReader {
         shadow.style.opacity = '0';
 
         setTimeout(() => {
-            page.style.display = 'none';
-            shadow.style.display = 'none';
-            page.style.transition = 'none';
-            shadow.style.transition = 'none';
-            this.pageAnimating = false;
-
+            this.hidePageTurn();
+            this.isAnimating = false;
             if (direction === 'next') this.doNextPage();
             else this.doPrevPage();
-        }, 380);
+        }, 360);
     }
 
-    cancelSwipe() {
+    revertPageTurn() {
         const page = document.getElementById('swipe-page');
         const shadow = document.getElementById('swipe-shadow');
 
-        page.style.transition = 'transform 0.3s ease-out';
-        shadow.style.transition = 'opacity 0.3s ease-out';
+        page.style.transition = 'transform 0.25s ease-out';
+        shadow.style.transition = 'opacity 0.25s ease-out';
 
-        if (this.swipeDirection === 'next') {
+        if (this.touchDirection === 'next') {
             page.style.transform = 'perspective(1800px) rotateY(0deg)';
         } else {
             page.style.transform = 'perspective(1800px) rotateY(180deg)';
         }
         shadow.style.opacity = '0';
 
-        setTimeout(() => {
+        setTimeout(() => this.hidePageTurn(), 260);
+    }
+
+    hidePageTurn() {
+        const page = document.getElementById('swipe-page');
+        const shadow = document.getElementById('swipe-shadow');
+        if (page) {
             page.style.display = 'none';
-            shadow.style.display = 'none';
             page.style.transition = 'none';
+        }
+        if (shadow) {
+            shadow.style.display = 'none';
             shadow.style.transition = 'none';
-        }, 320);
+        }
+    }
+
+    // Animación al pulsar teclado
+    animatePageTurn(direction, callback) {
+        if (this.isAnimating) return;
+        this.isAnimating = true;
+
+        const page = document.getElementById('swipe-page');
+        const shadow = document.getElementById('swipe-shadow');
+        const bg = getComputedStyle(document.documentElement).getPropertyValue('--reader-bg').trim() || '#fff';
+
+        page.style.display = 'block';
+        shadow.style.display = 'block';
+        page.style.background = bg;
+        page.style.left = '0';
+        page.style.width = '100%';
+        page.style.top = '0';
+        page.style.height = '100%';
+        page.style.transition = 'none';
+        shadow.style.transition = 'none';
+
+        if (direction === 'next') {
+            page.style.transformOrigin = 'left center';
+            page.style.transform = 'perspective(1800px) rotateY(0deg)';
+        } else {
+            page.style.transformOrigin = 'right center';
+            page.style.transform = 'perspective(1800px) rotateY(180deg)';
+        }
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                page.style.transition = 'transform 0.5s ease-in-out';
+                shadow.style.transition = 'opacity 0.5s ease-in-out';
+                if (direction === 'next') {
+                    page.style.transform = 'perspective(1800px) rotateY(-180deg)';
+                    shadow.style.background = 'linear-gradient(to right, rgba(0,0,0,0.35), transparent)';
+                } else {
+                    page.style.transform = 'perspective(1800px) rotateY(0deg)';
+                    shadow.style.background = 'linear-gradient(to left, rgba(0,0,0,0.35), transparent)';
+                }
+                shadow.style.opacity = '0.4';
+                setTimeout(() => shadow.style.opacity = '0', 250);
+            });
+        });
+
+        setTimeout(() => {
+            this.hidePageTurn();
+            this.isAnimating = false;
+            if (callback) callback();
+        }, 520);
     }
 
     // ============================================
@@ -339,77 +399,22 @@ class BookReader {
     onKeyDown(e) {
         if (!document.getElementById('reader-screen').classList.contains('active')) return;
         switch (e.key) {
-            case 'ArrowLeft': case 'ArrowUp': e.preventDefault(); this.triggerPrev(); break;
-            case 'ArrowRight': case 'ArrowDown': e.preventDefault(); this.triggerNext(); break;
-            case 'Escape': if (this.isFullscreen) this.toggleFullscreen(); break;
+            case 'ArrowLeft': case 'ArrowUp':
+                e.preventDefault();
+                this.animatePageTurn('prev', () => this.doPrevPage());
+                break;
+            case 'ArrowRight': case 'ArrowDown':
+                e.preventDefault();
+                this.animatePageTurn('next', () => this.doNextPage());
+                break;
+            case 'Escape':
+                if (this.isFullscreen) this.toggleFullscreen();
+                break;
         }
     }
 
-    triggerNext() {
-        if (this.pageAnimating) return;
-        this.pageAnimating = true;
-        this.renderSwipeVisual('next', 0);
-
-        const page = document.getElementById('swipe-page');
-        const shadow = document.getElementById('swipe-shadow');
-        page.style.display = 'block';
-        shadow.style.display = 'block';
-
-        requestAnimationFrame(() => {
-            page.style.transition = 'transform 0.45s ease-in-out';
-            shadow.style.transition = 'opacity 0.45s ease-in-out';
-            page.style.transform = 'perspective(1800px) rotateY(-180deg)';
-            shadow.style.opacity = '0';
-        });
-
-        setTimeout(() => {
-            page.style.display = 'none';
-            shadow.style.display = 'none';
-            page.style.transition = 'none';
-            shadow.style.transition = 'none';
-            this.pageAnimating = false;
-            this.doNextPage();
-        }, 480);
-    }
-
-    triggerPrev() {
-        if (this.pageAnimating) return;
-        this.pageAnimating = true;
-
-        const page = document.getElementById('swipe-page');
-        const shadow = document.getElementById('swipe-shadow');
-
-        page.style.display = 'block';
-        shadow.style.display = 'block';
-        page.style.background = getComputedStyle(document.documentElement).getPropertyValue('--reader-bg').trim();
-        page.style.transformOrigin = 'right center';
-        page.style.left = '0';
-        page.style.width = '100%';
-        page.style.transition = 'none';
-        page.style.transform = 'perspective(1800px) rotateY(180deg)';
-        shadow.style.opacity = '0';
-
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                page.style.transition = 'transform 0.45s ease-in-out';
-                shadow.style.transition = 'opacity 0.45s ease-in-out';
-                page.style.transform = 'perspective(1800px) rotateY(0deg)';
-                shadow.style.opacity = '0.3';
-            });
-        });
-
-        setTimeout(() => {
-            page.style.display = 'none';
-            shadow.style.display = 'none';
-            page.style.transition = 'none';
-            shadow.style.transition = 'none';
-            this.pageAnimating = false;
-            this.doPrevPage();
-        }, 480);
-    }
-
     // ============================================
-    // ACTUAL PAGE CHANGES
+    // PAGE CHANGES
     // ============================================
     doNextPage() {
         if (this.bookType === 'epub' && this.epubRendition) {
@@ -449,17 +454,17 @@ class BookReader {
             return;
         }
 
-        const key = file.name.replace(/[^a-zA-Z0-9._-]/g, '_') + '_' + file.size;
-        const arrayBuffer = await file.arrayBuffer();
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const key = file.name.replace(/[^a-zA-Z0-9._-]/g, '_') + '_' + file.size;
 
-        // Guardar en IndexedDB
-        this.saveFileToDB(key, arrayBuffer, file.name, ext);
-
-        // Agregar a la biblioteca
-        this.addToLibrary(key, file.name, ext);
-
-        // Abrir
-        this.openBook(key, arrayBuffer, file.name, ext);
+            this.saveFileToDB(key, arrayBuffer, file.name, ext);
+            this.addToLibrary(key, file.name, ext);
+            this.openBook(key, arrayBuffer, file.name, ext);
+        } catch (err) {
+            console.error(err);
+            this.showToast('Error al leer archivo', 'error');
+        }
     }
 
     addToLibrary(key, name, type) {
@@ -474,10 +479,11 @@ class BookReader {
     removeFromLibrary(key, type) {
         this.library[type] = this.library[type].filter(b => b.key !== key);
         this.deleteFileFromDB(key);
-        // Borrar marcadores y posición
-        const positions = JSON.parse(localStorage.getItem('bookPositions') || '{}');
-        delete positions[key];
-        localStorage.setItem('bookPositions', JSON.stringify(positions));
+        try {
+            const positions = JSON.parse(localStorage.getItem('bookPositions') || '{}');
+            delete positions[key];
+            localStorage.setItem('bookPositions', JSON.stringify(positions));
+        } catch (e) {}
         delete this.bookmarks[key];
         this.saveSettings();
         this.renderLibrary();
@@ -486,8 +492,8 @@ class BookReader {
 
     async openBookFromLibrary(key, name, type) {
         const record = await this.loadFileFromDB(key);
-        if (!record) {
-            this.showToast('Archivo no encontrado. Súbelo de nuevo.', 'error');
+        if (!record || !record.data) {
+            this.showToast('Archivo no encontrado, súbelo de nuevo', 'error');
             this.removeFromLibrary(key, type);
             return;
         }
@@ -498,7 +504,6 @@ class BookReader {
         this.currentBook = name;
         this.currentBookKey = key;
         this.bookType = type;
-
         if (type === 'epub') this.openEpub(arrayBuffer, name);
         else this.openPdf(arrayBuffer, name);
     }
@@ -510,23 +515,25 @@ class BookReader {
         try {
             this.showToast('Cargando libro...', 'info');
 
-            if (this.epubBook) this.epubBook.destroy();
+            if (this.epubBook) {
+                try { this.epubBook.destroy(); } catch (e) {}
+            }
 
             document.getElementById('epub-viewer').style.display = 'block';
             document.getElementById('epub-viewer').innerHTML = '';
             document.getElementById('pdf-canvas').style.display = 'none';
 
-            this.epubBook = ePub(buf);
             this.showReaderScreen();
-            await new Promise(r => setTimeout(r, 150));
+            await new Promise(r => setTimeout(r, 200));
+
+            this.epubBook = ePub(buf);
 
             const el = document.getElementById('epub-viewer');
             this.epubRendition = this.epubBook.renderTo('epub-viewer', {
                 width: el.clientWidth,
                 height: el.clientHeight,
                 spread: 'none',
-                flow: 'paginated',
-                manager: 'default'
+                flow: 'paginated'
             });
 
             this.applyEpubStyles();
@@ -547,14 +554,16 @@ class BookReader {
                 this.savePosition();
             });
 
-            try { await this.epubBook.locations.generate(1024); } catch (e) {}
+            try {
+                await this.epubBook.locations.generate(1024);
+            } catch (e) {}
 
             this.restorePosition();
-            this.showToast('📖 ¡Libro cargado!', 'success');
+            this.showToast('📖 Libro cargado', 'success');
             this.setupResize();
 
         } catch (err) {
-            console.error(err);
+            console.error('Error EPUB:', err);
             this.showToast('Error al abrir ePub', 'error');
         }
     }
@@ -564,7 +573,9 @@ class BookReader {
         this._rh = () => {
             if (this.epubRendition) {
                 const el = document.getElementById('epub-viewer');
-                if (el) this.epubRendition.resize(el.clientWidth, el.clientHeight);
+                if (el) {
+                    try { this.epubRendition.resize(el.clientWidth, el.clientHeight); } catch (e) {}
+                }
             }
         };
         window.addEventListener('resize', this._rh);
@@ -573,35 +584,37 @@ class BookReader {
     applyEpubStyles() {
         if (!this.epubRendition) return;
         const c = this.getThemeColors();
-        this.epubRendition.themes.default({
-            'html': { 'background': c.bg + '!important' },
-            'body': {
-                'background': c.bg + '!important',
-                'color': c.text + '!important',
-                'font-size': this.fontSize + 'px!important',
-                'font-family': this.fontFamily + '!important',
-                'line-height': '1.8!important',
-                'padding': '10px!important',
-            },
-            'p,span,div,li,td,th,dd,dt,blockquote,figcaption': {
-                'color': c.text + '!important',
-            },
-            'h1,h2,h3,h4,h5,h6': { 'color': c.text + '!important' },
-            'a': { 'color': '#6c5ce7!important' },
-            'img': { 'max-width': '100%!important', 'height': 'auto!important' }
-        });
+        try {
+            this.epubRendition.themes.default({
+                'html': { 'background': c.bg + ' !important' },
+                'body': {
+                    'background': c.bg + ' !important',
+                    'color': c.text + ' !important',
+                    'font-size': this.fontSize + 'px !important',
+                    'font-family': this.fontFamily + ' !important',
+                    'line-height': '1.8 !important',
+                    'padding': '10px !important'
+                },
+                'p, span, div, li, td, th, dd, dt, blockquote, figcaption': {
+                    'color': c.text + ' !important'
+                },
+                'h1, h2, h3, h4, h5, h6': { 'color': c.text + ' !important' },
+                'a': { 'color': '#6c5ce7 !important' },
+                'img': { 'max-width': '100% !important', 'height': 'auto !important' }
+            });
+        } catch (e) {}
     }
 
     getThemeColors() {
         const map = {
-            'theme-light':     { bg:'#ffffff', text:'#333333' },
-            'theme-dark':      { bg:'#1a1a2e', text:'#d4d4d4' },
-            'theme-sepia':     { bg:'#f4ecd8', text:'#5b4636' },
-            'theme-old-paper': { bg:'#d4c5a9', text:'#3e2f1c' },
-            'theme-green':     { bg:'#e8f5e9', text:'#1b5e20' },
-            'theme-blue':      { bg:'#1a237e', text:'#c5cae9' },
-            'theme-rose':      { bg:'#fce4ec', text:'#880e4f' },
-            'theme-cream':     { bg:'#fff8e1', text:'#4e342e' },
+            'theme-light':     { bg: '#ffffff', text: '#333333' },
+            'theme-dark':      { bg: '#1a1a2e', text: '#d4d4d4' },
+            'theme-sepia':     { bg: '#f4ecd8', text: '#5b4636' },
+            'theme-old-paper': { bg: '#d4c5a9', text: '#3e2f1c' },
+            'theme-green':     { bg: '#e8f5e9', text: '#1b5e20' },
+            'theme-blue':      { bg: '#1a237e', text: '#c5cae9' },
+            'theme-rose':      { bg: '#fce4ec', text: '#880e4f' },
+            'theme-cream':     { bg: '#fff8e1', text: '#4e342e' }
         };
         return map[this.currentTheme] || map['theme-light'];
     }
@@ -616,6 +629,9 @@ class BookReader {
             document.getElementById('epub-viewer').style.display = 'none';
             document.getElementById('pdf-canvas').style.display = 'block';
 
+            this.showReaderScreen();
+            await new Promise(r => setTimeout(r, 200));
+
             this.pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
             this.pdfTotal = this.pdfDoc.numPages;
             this.pdfPage = 1;
@@ -624,14 +640,11 @@ class BookReader {
             document.getElementById('current-book-title').textContent = title;
 
             this.renderPdfChapters();
-            this.showReaderScreen();
-            await new Promise(r => setTimeout(r, 150));
-
             this.restorePosition();
             await this.renderPdfPage(this.pdfPage);
             this.showToast(`📄 PDF cargado · ${this.pdfTotal} págs`, 'success');
         } catch (err) {
-            console.error(err);
+            console.error('Error PDF:', err);
             this.showToast('Error al abrir PDF', 'error');
         }
     }
@@ -640,28 +653,32 @@ class BookReader {
         if (!this.pdfDoc || num < 1 || num > this.pdfTotal) return;
         this.pdfPage = num;
 
-        const page = await this.pdfDoc.getPage(num);
-        const canvas = document.getElementById('pdf-canvas');
-        const ctx = canvas.getContext('2d');
+        try {
+            const page = await this.pdfDoc.getPage(num);
+            const canvas = document.getElementById('pdf-canvas');
+            const ctx = canvas.getContext('2d');
 
-        const wrapper = document.getElementById('reader-wrapper');
-        const maxW = wrapper.clientWidth;
-        const maxH = wrapper.clientHeight;
+            const wrapper = document.getElementById('reader-wrapper');
+            const maxW = wrapper.clientWidth;
+            const maxH = wrapper.clientHeight;
 
-        const vp0 = page.getViewport({ scale: 1 });
-        const scale = Math.min(maxW / vp0.width, maxH / vp0.height, 2.5);
-        const viewport = page.getViewport({ scale });
+            const vp0 = page.getViewport({ scale: 1 });
+            const scale = Math.min(maxW / vp0.width, maxH / vp0.height, 2.5);
+            const viewport = page.getViewport({ scale });
 
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
 
-        await page.render({ canvasContext: ctx, viewport }).promise;
+            await page.render({ canvasContext: ctx, viewport }).promise;
 
-        const pct = Math.round((num / this.pdfTotal) * 100);
-        document.getElementById('progress-slider').value = pct;
-        document.getElementById('progress-label-left').textContent = pct + '%';
-        document.getElementById('page-info').textContent = `${num} / ${this.pdfTotal}`;
-        this.savePosition();
+            const pct = Math.round((num / this.pdfTotal) * 100);
+            document.getElementById('progress-slider').value = pct;
+            document.getElementById('progress-label-left').textContent = pct + '%';
+            document.getElementById('page-info').textContent = `${num} / ${this.pdfTotal}`;
+            this.savePosition();
+        } catch (e) {
+            console.error('Error render PDF', e);
+        }
     }
 
     renderPdfChapters() {
@@ -696,7 +713,7 @@ class BookReader {
                 d.style.paddingLeft = (14 + lvl * 16) + 'px';
                 d.textContent = item.label.trim();
                 d.addEventListener('click', () => {
-                    this.epubRendition.display(item.href);
+                    if (this.epubRendition) this.epubRendition.display(item.href);
                     this.closeAllPanels();
                 });
                 list.appendChild(d);
@@ -726,9 +743,11 @@ class BookReader {
             if (this.bookmarks[k].some(b => b.page === data.page)) { this.showToast('Ya existe', 'warning'); return; }
         }
 
-        this.bookmarks[k].push(data);
-        this.saveSettings();
-        this.showToast('⭐ Marcador guardado', 'success');
+        if (data) {
+            this.bookmarks[k].push(data);
+            this.saveSettings();
+            this.showToast('⭐ Marcador guardado', 'success');
+        }
     }
 
     renderBookmarks() {
@@ -753,8 +772,8 @@ class BookReader {
                 <button class="bookmark-delete">✕</button>
             `;
             item.querySelector('.bookmark-info').addEventListener('click', () => {
-                if (bm.type === 'epub') this.epubRendition.display(bm.cfi);
-                else this.renderPdfPage(bm.page);
+                if (bm.type === 'epub' && this.epubRendition) this.epubRendition.display(bm.cfi);
+                else if (bm.type === 'pdf') this.renderPdfPage(bm.page);
                 this.closeAllPanels();
             });
             item.querySelector('.bookmark-delete').addEventListener('click', e => {
@@ -782,7 +801,6 @@ class BookReader {
         document.querySelectorAll('.theme-card').forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
         if (this.epubRendition) this.applyEpubStyles();
         this.saveSettings();
-        this.showToast('🎨 Tema aplicado', 'success');
     }
 
     // ============================================
@@ -821,7 +839,6 @@ class BookReader {
                     this.isFullscreen = true;
                     document.body.classList.add('fullscreen-mode');
                     this.barsVisible = false;
-                    this.showToast('Modo inmersivo', 'info');
                 });
             } else {
                 this.isFullscreen = true;
@@ -862,6 +879,7 @@ class BookReader {
             if (id === 'bookmarks-panel') this.renderBookmarks();
         }
     }
+
     closeAllPanels() {
         document.querySelectorAll('.side-panel').forEach(p => p.classList.remove('open'));
         document.getElementById('overlay').classList.remove('active');
@@ -877,7 +895,11 @@ class BookReader {
 
     goHome() {
         this.savePosition();
-        if (this.epubBook) { this.epubBook.destroy(); this.epubBook = null; this.epubRendition = null; }
+        if (this.epubBook) {
+            try { this.epubBook.destroy(); } catch (e) {}
+            this.epubBook = null;
+            this.epubRendition = null;
+        }
         this.pdfDoc = null;
         document.getElementById('epub-viewer').innerHTML = '';
         document.getElementById('pdf-canvas').style.display = 'none';
@@ -905,7 +927,9 @@ class BookReader {
         const section = document.getElementById(`${type}-library`);
         const shelf = document.getElementById(`${type}-shelf`);
         const count = document.getElementById(`${type}-count`);
-        const books = this.library[type];
+        if (!section || !shelf) return;
+
+        const books = this.library[type] || [];
 
         if (!books.length) {
             section.style.display = 'none';
@@ -913,13 +937,12 @@ class BookReader {
         }
 
         section.style.display = 'block';
-        count.textContent = books.length;
+        if (count) count.textContent = books.length;
         shelf.innerHTML = '';
 
         books.forEach(book => {
             const card = document.createElement('div');
             card.className = 'book-card';
-
             const shortName = book.name.replace(/\.(epub|pdf)$/i, '');
 
             card.innerHTML = `
@@ -963,50 +986,62 @@ class BookReader {
             pos = { type: 'pdf', page: this.pdfPage };
         }
         if (pos) {
-            const all = JSON.parse(localStorage.getItem('bookPositions') || '{}');
-            all[k] = pos;
-            localStorage.setItem('bookPositions', JSON.stringify(all));
+            try {
+                const all = JSON.parse(localStorage.getItem('bookPositions') || '{}');
+                all[k] = pos;
+                localStorage.setItem('bookPositions', JSON.stringify(all));
+            } catch (e) {}
         }
     }
 
     restorePosition() {
         const k = this.currentBookKey;
         if (!k) return;
-        const all = JSON.parse(localStorage.getItem('bookPositions') || '{}');
-        const pos = all[k];
-        if (pos) {
-            if (pos.type === 'epub' && this.epubRendition) {
-                try { this.epubRendition.display(pos.cfi); } catch (e) {}
-            } else if (pos.type === 'pdf') {
-                this.pdfPage = pos.page || 1;
+        try {
+            const all = JSON.parse(localStorage.getItem('bookPositions') || '{}');
+            const pos = all[k];
+            if (pos) {
+                if (pos.type === 'epub' && this.epubRendition) {
+                    try { this.epubRendition.display(pos.cfi); } catch (e) {}
+                } else if (pos.type === 'pdf') {
+                    this.pdfPage = pos.page || 1;
+                }
             }
-        }
+        } catch (e) {}
     }
 
     saveSettings() {
-        localStorage.setItem('kmiReaderSettings', JSON.stringify({
-            theme: this.currentTheme,
-            fontSize: this.fontSize,
-            fontFamily: this.fontFamily,
-            bookmarks: this.bookmarks,
-            library: this.library
-        }));
+        try {
+            localStorage.setItem('kmiReaderSettings', JSON.stringify({
+                theme: this.currentTheme,
+                fontSize: this.fontSize,
+                fontFamily: this.fontFamily,
+                bookmarks: this.bookmarks,
+                library: this.library
+            }));
+        } catch (e) {}
     }
 
     loadSettings() {
-        const s = JSON.parse(localStorage.getItem('kmiReaderSettings') || '{}');
-        if (s.theme) this.currentTheme = s.theme;
-        if (s.fontSize) this.fontSize = s.fontSize;
-        if (s.fontFamily) this.fontFamily = s.fontFamily;
-        if (s.bookmarks) this.bookmarks = s.bookmarks;
-        if (s.library) this.library = { epub: s.library.epub || [], pdf: s.library.pdf || [] };
+        try {
+            const s = JSON.parse(localStorage.getItem('kmiReaderSettings') || '{}');
+            if (s.theme) this.currentTheme = s.theme;
+            if (s.fontSize) this.fontSize = s.fontSize;
+            if (s.fontFamily) this.fontFamily = s.fontFamily;
+            if (s.bookmarks) this.bookmarks = s.bookmarks;
+            if (s.library) this.library = { epub: s.library.epub || [], pdf: s.library.pdf || [] };
+        } catch (e) {}
 
-        document.getElementById('font-size-display').textContent = this.fontSize + 'px';
+        const fsd = document.getElementById('font-size-display');
+        if (fsd) fsd.textContent = this.fontSize + 'px';
         document.documentElement.style.setProperty('--font-size', this.fontSize + 'px');
         document.documentElement.style.setProperty('--font-family', this.fontFamily);
     }
 }
 
 // INIT
-document.addEventListener('DOMContentLoaded', () => { window.reader = new BookReader(); });
+document.addEventListener('DOMContentLoaded', () => {
+    window.reader = new BookReader();
+});
+
 document.addEventListener('gesturestart', e => e.preventDefault());
