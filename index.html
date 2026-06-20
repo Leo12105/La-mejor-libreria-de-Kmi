@@ -3,25 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Biblioteca de Kmi</title>
 
 <link rel="stylesheet" href="style.css">
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
-
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=swap" rel="stylesheet">
 </head>
+
 <body>
 
 <div class="stars"></div>
 
-<div class="hero">
+<section class="hero">
+
+<div class="hero-content">
 
 <h1>📚 Biblioteca de Kmi</h1>
 
-<p class="welcome">
-Bienvenida a tu rincón mágico de historias
+<p class="subtitle">
+Un rincón mágico para guardar todas tus historias favoritas
 </p>
 
 <div class="quote-card">
@@ -29,50 +29,45 @@ Bienvenida a tu rincón mágico de historias
 <p id="quote"></p>
 </div>
 
-<button onclick="scrollToLibrary()">
-Entrar
+<button id="enterBtn">
+Entrar a la Biblioteca
 </button>
 
 </div>
 
-<section class="love-letter">
-
-<h2>💌 Una carta para ti</h2>
-
-<p>
-Kmi, sé cuánto te gusta perderte entre páginas,
-imaginar mundos y enamorarte de personajes.
-
-Por eso quise crear un lugar donde todas tus
-historias favoritas puedan vivir juntas.
-
-Espero que cada vez que entres aquí recuerdes
-lo especial que eres para mí.
-</p>
-
 </section>
 
-<section id="library">
+<section class="hidden-section" id="librarySection">
 
-<h2>📖 Tu Biblioteca</h2>
+<div class="letter">
 
-<div class="upload-box">
+<h2>💌 Para Kmi</h2>
 
-<input type="file" id="pdfInput" accept=".pdf">
-<label for="pdfInput" class="btn">
-📄 Importar PDF
-</label>
+<p>
+Cada libro abre una puerta a un mundo diferente.
+Quise regalarte un lugar donde puedas guardar todas esas aventuras,
+porque sé cuánto amas perderte entre páginas.
+</p>
 
-<input type="file" id="epubInput" accept=".epub">
-<label for="epubInput" class="btn">
-📚 Importar EPUB
+</div>
+
+<h2 class="shelf-title">
+📖 Mi Biblioteca
+</h2>
+
+<div class="controls">
+
+<input type="file" id="bookInput" accept=".pdf,.epub">
+
+<label for="bookInput" class="upload-btn">
+➕ Añadir Libro
 </label>
 
 </div>
 
-<div id="pdfViewer"></div>
+<div id="bookshelf" class="bookshelf">
 
-<div id="epubViewer"></div>
+</div>
 
 </section>
 
