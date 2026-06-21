@@ -2,1333 +2,317 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>📚 Mi Biblioteca de Amor</title>
+
+    <!-- PDF.js from Mozilla CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+    <!-- JSZip for EPUB -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
+        *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+
+        :root{
+            --bg:#0a0a0f;--bg2:#12111a;--card:#1a1520;--card-h:#221c2a;--surface:#15121e;
+            --rose:#c4566a;--rose-l:#e8839a;--rose-d:#8b2e42;--rose-g:rgba(196,86,106,.3);
+            --gold:#c9a96e;--gold-l:#dfc08a;--gold-d:#a08040;
+            --txt:#e8e0f0;--txt2:#9a8eb0;--txt3:#6b5f80;
+            --brd:#2a2235;--brd2:#3a2f4a;
+            --ok:#6ecf8e;--err:#cf6e6e;--heart:#e74c6f;
         }
 
-        :root {
-            --bg-primary: #0a0a0f;
-            --bg-secondary: #12111a;
-            --bg-card: #1a1520;
-            --bg-card-hover: #221c2a;
-            --bg-surface: #15121e;
-            --rose-primary: #c4566a;
-            --rose-light: #e8839a;
-            --rose-dark: #8b2e42;
-            --rose-glow: rgba(196, 86, 106, 0.3);
-            --gold: #c9a96e;
-            --gold-light: #dfc08a;
-            --gold-dark: #a08040;
-            --text-primary: #e8e0f0;
-            --text-secondary: #9a8eb0;
-            --text-muted: #6b5f80;
-            --border: #2a2235;
-            --border-light: #3a2f4a;
-            --success: #6ecf8e;
-            --danger: #cf6e6e;
-            --heart: #e74c6f;
-        }
+        body{font-family:'Lora',Georgia,serif;background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden}
 
-        body {
-            font-family: 'Lora', 'Georgia', serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
-            min-height: -webkit-fill-available;
-            overflow-x: hidden;
-        }
-
-        /* ===== SPLASH / FRASE ROMÁNTICA ===== */
-        .splash-screen {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: var(--bg-primary);
-            z-index: 10000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-            transition: opacity 0.8s ease, transform 0.8s ease;
-        }
-
-        .splash-screen.fade-out {
-            opacity: 0;
-            transform: scale(1.05);
-            pointer-events: none;
-        }
-
-        .splash-bg {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            overflow: hidden;
-        }
-
-        .splash-bg::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(ellipse at 30% 50%, rgba(196,86,106,0.08) 0%, transparent 50%),
-                        radial-gradient(ellipse at 70% 50%, rgba(201,169,110,0.06) 0%, transparent 50%);
-            animation: splashGlow 6s ease-in-out infinite alternate;
-        }
-
-        @keyframes splashGlow {
-            0% { transform: translate(0, 0) rotate(0deg); }
-            100% { transform: translate(2%, -2%) rotate(3deg); }
-        }
-
-        .splash-petals {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none;
-        }
-
-        .petal {
-            position: absolute;
-            font-size: 1.2em;
-            opacity: 0;
-            animation: petalFall linear infinite;
-        }
-
-        @keyframes petalFall {
-            0% { opacity: 0; transform: translateY(-20px) rotate(0deg); }
-            10% { opacity: 0.6; }
-            90% { opacity: 0.4; }
-            100% { opacity: 0; transform: translateY(100vh) rotate(720deg); }
-        }
-
-        .splash-content {
-            position: relative;
-            z-index: 2;
-            text-align: center;
-            max-width: 500px;
-        }
-
-        .splash-heart {
-            font-size: 3em;
-            margin-bottom: 20px;
-            animation: heartBeat 1.5s ease-in-out infinite;
-            filter: drop-shadow(0 0 20px var(--rose-glow));
-        }
-
-        @keyframes heartBeat {
-            0%, 100% { transform: scale(1); }
-            15% { transform: scale(1.15); }
-            30% { transform: scale(1); }
-            45% { transform: scale(1.1); }
-        }
-
-        .splash-quote {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 1.5em;
-            font-style: italic;
-            line-height: 1.6;
-            color: var(--rose-light);
-            margin-bottom: 15px;
-            animation: fadeInUp 1s ease 0.3s both;
-        }
-
-        .splash-author {
-            font-size: 0.9em;
-            color: var(--gold);
-            margin-bottom: 40px;
-            animation: fadeInUp 1s ease 0.6s both;
-        }
-
-        .splash-enter {
-            padding: 14px 40px;
-            background: linear-gradient(135deg, var(--rose-dark), var(--rose-primary));
-            border: 1px solid var(--rose-primary);
-            color: white;
-            font-family: 'Playfair Display', serif;
-            font-size: 1em;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: all 0.4s;
-            animation: fadeInUp 1s ease 0.9s both;
-            -webkit-appearance: none;
-        }
-
-        .splash-enter:hover, .splash-enter:active {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px var(--rose-glow);
-            background: linear-gradient(135deg, var(--rose-primary), var(--rose-light));
-        }
-
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        /* ===== SPLASH ===== */
+        .splash{position:fixed;inset:0;background:var(--bg);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;transition:opacity .8s,transform .8s}
+        .splash.hide{opacity:0;transform:scale(1.05);pointer-events:none}
+        .splash-bg{position:absolute;inset:0;overflow:hidden}
+        .splash-bg::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 50%,rgba(196,86,106,.08) 0%,transparent 50%),radial-gradient(ellipse at 70% 50%,rgba(201,169,110,.06) 0%,transparent 50%);animation:sglow 6s ease-in-out infinite alternate}
+        @keyframes sglow{0%{transform:translate(0,0)}100%{transform:translate(2%,-2%)}}
+        .splash-petals{position:absolute;inset:0;pointer-events:none}
+        .petal{position:absolute;opacity:0;animation:pfall linear infinite}
+        @keyframes pfall{0%{opacity:0;transform:translateY(-20px) rotate(0)}10%{opacity:.6}90%{opacity:.4}100%{opacity:0;transform:translateY(100vh) rotate(720deg)}}
+        .splash-c{position:relative;z-index:2;text-align:center;max-width:500px}
+        .splash-h{font-size:3em;margin-bottom:20px;animation:hbeat 1.5s ease-in-out infinite;filter:drop-shadow(0 0 20px var(--rose-g))}
+        @keyframes hbeat{0%,100%{transform:scale(1)}15%{transform:scale(1.15)}30%{transform:scale(1)}45%{transform:scale(1.1)}}
+        .splash-q{font-family:'Cormorant Garamond',serif;font-size:1.5em;font-style:italic;line-height:1.6;color:var(--rose-l);margin-bottom:15px;animation:fup 1s ease .3s both}
+        .splash-a{font-size:.9em;color:var(--gold);margin-bottom:40px;animation:fup 1s ease .6s both}
+        .splash-btn{padding:14px 40px;background:linear-gradient(135deg,var(--rose-d),var(--rose));border:1px solid var(--rose);color:#fff;font-family:'Playfair Display',serif;font-size:1em;border-radius:30px;cursor:pointer;transition:all .4s;animation:fup 1s ease .9s both;-webkit-appearance:none}
+        .splash-btn:active{transform:scale(.96);box-shadow:0 8px 30px var(--rose-g)}
+        @keyframes fup{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 
         /* ===== HEADER ===== */
-        .app-header {
-            background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
-            padding: 20px;
-            text-align: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 1px solid var(--border);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-        }
-
-        .app-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.6em;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--rose-light), var(--gold));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .app-subtitle {
-            font-size: 0.8em;
-            color: var(--text-muted);
-            font-style: italic;
-            margin-top: 3px;
-        }
+        .hdr{background:linear-gradient(180deg,var(--bg2),var(--bg));padding:20px;text-align:center;position:sticky;top:0;z-index:100;border-bottom:1px solid var(--brd);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+        .hdr h1{font-family:'Playfair Display',serif;font-size:1.6em;background:linear-gradient(135deg,var(--rose-l),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .hdr p{font-size:.8em;color:var(--txt3);font-style:italic;margin-top:3px}
 
         /* ===== TOOLBAR ===== */
-        .toolbar {
-            display: flex;
-            gap: 10px;
-            padding: 15px 20px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
+        .toolbar{display:flex;gap:10px;padding:15px 20px;flex-wrap:wrap}
+        .search-w{flex:1;min-width:180px;position:relative}
+        .search-w input{width:100%;padding:12px 20px 12px 42px;background:var(--surface);border:1px solid var(--brd);border-radius:25px;color:var(--txt);font-family:'Lora',serif;font-size:.9em;-webkit-appearance:none;transition:border .3s}
+        .search-w input:focus{outline:none;border-color:var(--rose);box-shadow:0 0 20px rgba(196,86,106,.15)}
+        .search-w input::placeholder{color:var(--txt3)}
+        .search-w::before{content:'🔍';position:absolute;left:14px;top:50%;transform:translateY(-50%)}
 
-        .search-wrapper {
-            flex: 1;
-            min-width: 180px;
-            position: relative;
-        }
-
-        .search-wrapper input {
-            width: 100%;
-            padding: 12px 20px 12px 42px;
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            border-radius: 25px;
-            color: var(--text-primary);
-            font-family: 'Lora', serif;
-            font-size: 0.9em;
-            -webkit-appearance: none;
-            transition: all 0.3s;
-        }
-
-        .search-wrapper input:focus {
-            outline: none;
-            border-color: var(--rose-primary);
-            box-shadow: 0 0 20px rgba(196,86,106,0.15);
-        }
-
-        .search-wrapper input::placeholder {
-            color: var(--text-muted);
-        }
-
-        .search-wrapper::before {
-            content: '🔍';
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 1em;
-        }
-
-        .btn {
-            padding: 11px 22px;
-            border: none;
-            border-radius: 25px;
-            font-family: 'Lora', serif;
-            font-size: 0.88em;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            -webkit-appearance: none;
-            white-space: nowrap;
-        }
-
-        .btn-rose {
-            background: linear-gradient(135deg, var(--rose-dark), var(--rose-primary));
-            color: white;
-            border: 1px solid rgba(196,86,106,0.3);
-        }
-
-        .btn-rose:active {
-            transform: scale(0.96);
-            box-shadow: 0 5px 25px var(--rose-glow);
-        }
-
-        .btn-gold {
-            background: linear-gradient(135deg, var(--gold-dark), var(--gold));
-            color: #1a1520;
-            border: 1px solid rgba(201,169,110,0.3);
-        }
-
-        .btn-gold:active {
-            transform: scale(0.96);
-        }
-
-        .btn-ghost {
-            background: var(--bg-surface);
-            color: var(--text-secondary);
-            border: 1px solid var(--border);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #6e2020, var(--danger));
-            color: white;
-        }
-
-        .btn-sm {
-            padding: 8px 16px;
-            font-size: 0.82em;
-        }
-
-        .btn-icon {
-            width: 40px;
-            height: 40px;
-            padding: 0;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1em;
-        }
+        .btn{padding:11px 22px;border:none;border-radius:25px;font-family:'Lora',serif;font-size:.88em;font-weight:500;cursor:pointer;transition:all .3s;display:inline-flex;align-items:center;gap:6px;-webkit-appearance:none;white-space:nowrap}
+        .btn:active{transform:scale(.96)}
+        .btn-r{background:linear-gradient(135deg,var(--rose-d),var(--rose));color:#fff;border:1px solid rgba(196,86,106,.3)}
+        .btn-g{background:linear-gradient(135deg,var(--gold-d),var(--gold));color:#1a1520}
+        .btn-gh{background:var(--surface);color:var(--txt2);border:1px solid var(--brd)}
+        .btn-d{background:linear-gradient(135deg,#6e2020,var(--err));color:#fff}
+        .btn-sm{padding:8px 14px;font-size:.8em}
+        .btn-icon{width:42px;height:42px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1em;background:var(--surface);border:1px solid var(--brd);color:var(--txt2);cursor:pointer}
+        .btn-icon.on{color:var(--rose-l);border-color:var(--rose);background:rgba(196,86,106,.1)}
 
         /* ===== TABS ===== */
-        .tabs {
-            display: flex;
-            gap: 5px;
-            padding: 0 20px 12px;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-        }
+        .tabs{display:flex;gap:5px;padding:0 20px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+        .tabs::-webkit-scrollbar{display:none}
+        .tab{padding:8px 18px;border-radius:20px;background:var(--surface);border:1px solid var(--brd);color:var(--txt3);font-family:'Lora',serif;font-size:.82em;cursor:pointer;white-space:nowrap;-webkit-appearance:none;transition:all .3s}
+        .tab.on{background:linear-gradient(135deg,var(--rose-d),var(--rose));color:#fff;border-color:var(--rose)}
 
-        .tabs::-webkit-scrollbar { display: none; }
+        .stats{display:flex;justify-content:center;gap:25px;padding:10px 20px;font-size:.8em;color:var(--txt3)}
 
-        .tab {
-            padding: 8px 18px;
-            border-radius: 20px;
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            font-family: 'Lora', serif;
-            font-size: 0.82em;
-            cursor: pointer;
-            transition: all 0.3s;
-            white-space: nowrap;
-            -webkit-appearance: none;
-        }
+        /* ===== GRID ===== */
+        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:18px;padding:15px 20px 100px;max-width:1000px;margin:0 auto}
 
-        .tab.active {
-            background: linear-gradient(135deg, var(--rose-dark), var(--rose-primary));
-            color: white;
-            border-color: var(--rose-primary);
-        }
+        .card{background:var(--card);border-radius:16px;overflow:hidden;border:1px solid var(--brd);transition:all .3s;position:relative}
+        .card:active{transform:scale(.97)}
+        .card.fav{border-color:var(--gold-d);box-shadow:0 0 15px rgba(201,169,110,.1)}
+        .card.fav::after{content:'♥';position:absolute;top:8px;left:8px;width:28px;height:28px;background:rgba(231,76,111,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8em;color:#fff;z-index:5}
 
-        /* ===== STATS ===== */
-        .stats-bar {
-            display: flex;
-            justify-content: center;
-            gap: 25px;
-            padding: 10px 20px;
-            font-size: 0.8em;
-            color: var(--text-muted);
-        }
+        .cover-w{position:relative;width:100%;height:210px;overflow:hidden}
+        .cover-ph{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:15px;text-align:center}
+        .cover-ph.pdf-c{background:linear-gradient(135deg,#2a1520,#1a0f18,#2a1520)}
+        .cover-ph.epub-c{background:linear-gradient(135deg,#15201a,#0f1a15,#15201a)}
+        .cover-ph .ci{font-size:2.8em;filter:drop-shadow(0 2px 8px rgba(0,0,0,.3))}
+        .cover-ph .ct{font-family:'Playfair Display',serif;font-size:.95em;font-weight:600;color:var(--txt);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3}
 
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
+        .fmt{position:absolute;top:8px;right:8px;padding:3px 10px;border-radius:10px;font-size:.65em;font-weight:700;text-transform:uppercase;letter-spacing:.5px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);z-index:5}
+        .fmt.pdf{background:rgba(196,86,106,.85);color:#fff}
+        .fmt.epub{background:rgba(110,207,142,.85);color:#0a1a0f}
 
-        /* ===== BOOKS GRID ===== */
-        .books-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
-            gap: 18px;
-            padding: 15px 20px 100px;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
+        .prog-ring{position:absolute;bottom:8px;right:8px;z-index:5}
+        .prog-ring svg{width:36px;height:36px;transform:rotate(-90deg);filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+        .pr-bg{fill:rgba(0,0,0,.5);stroke:rgba(255,255,255,.15);stroke-width:3}
+        .pr-fill{fill:none;stroke:var(--rose-l);stroke-width:3;stroke-linecap:round;transition:stroke-dashoffset .5s}
+        .pr-txt{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:.55em;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 
-        .book-card {
-            background: var(--bg-card);
-            border-radius: 16px;
-            overflow: hidden;
-            border: 1px solid var(--border);
-            transition: all 0.3s;
-            position: relative;
-        }
+        .b-info{padding:12px}
+        .b-title{font-family:'Playfair Display',serif;font-size:.9em;font-weight:600;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3}
+        .b-author{font-size:.78em;color:var(--txt2);font-style:italic;margin-bottom:4px}
+        .b-meta{font-size:.7em;color:var(--txt3)}
+        .b-prog{height:3px;background:var(--brd);border-radius:2px;margin-top:8px;overflow:hidden}
+        .b-prog .fill{height:100%;background:linear-gradient(90deg,var(--rose),var(--rose-l));border-radius:2px;transition:width .4s}
+        .b-acts{display:flex;gap:6px;padding:0 12px 12px}
+        .b-acts .btn{flex:1;padding:8px 4px;font-size:.75em;justify-content:center;border-radius:10px}
 
-        .book-card:active {
-            transform: scale(0.97);
-        }
+        .empty{grid-column:1/-1;text-align:center;padding:50px 20px}
+        .empty .ei{font-size:3.5em;margin-bottom:15px;opacity:.6}
+        .empty h3{font-family:'Playfair Display',serif;font-size:1.2em;color:var(--rose-l);margin-bottom:8px}
+        .empty p{color:var(--txt3);font-size:.9em}
 
-        .book-card.favorite {
-            border-color: var(--gold-dark);
-            box-shadow: 0 0 15px rgba(201,169,110,0.1);
-        }
+        /* ===== MODAL ===== */
+        .modal{display:none;position:fixed;inset:0;background:rgba(5,5,10,.85);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);z-index:500;justify-content:center;align-items:flex-end}
+        .modal.on{display:flex}
+        .sheet{background:var(--bg2);border-radius:24px 24px 0 0;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;animation:sup .35s ease;border:1px solid var(--brd);border-bottom:none}
+        @keyframes sup{from{transform:translateY(100%)}to{transform:translateY(0)}}
+        .sheet-bar{width:36px;height:4px;background:var(--brd2);border-radius:2px;margin:12px auto}
+        .sheet-hdr{display:flex;justify-content:space-between;align-items:center;padding:5px 20px 15px}
+        .sheet-hdr h2{font-family:'Playfair Display',serif;font-size:1.15em;color:var(--rose-l)}
+        .x-btn{background:var(--surface);border:1px solid var(--brd);color:var(--txt3);width:32px;height:32px;border-radius:50%;font-size:1em;cursor:pointer;display:flex;align-items:center;justify-content:center}
+        .sheet-body{padding:0 20px 30px}
 
-        .book-card.favorite::after {
-            content: '♥';
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            width: 28px;
-            height: 28px;
-            background: rgba(231,76,111,0.9);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.8em;
-            color: white;
-            z-index: 5;
-            backdrop-filter: blur(5px);
-        }
+        .drop{border:2px dashed var(--brd2);border-radius:16px;padding:35px 20px;text-align:center;cursor:pointer;transition:all .3s;margin-bottom:18px}
+        .drop:active,.drop.over{border-color:var(--rose);background:rgba(196,86,106,.05)}
+        .drop .di{font-size:2.5em;margin-bottom:8px}
+        .drop .dt{color:var(--txt2);font-size:.9em}
+        .drop .dh{color:var(--txt3);font-size:.75em;margin-top:4px}
 
-        /* Book Cover */
-        .book-cover-wrap {
-            position: relative;
-            width: 100%;
-            height: 210px;
-            overflow: hidden;
-        }
+        .fsel{display:none;align-items:center;gap:12px;padding:12px;background:var(--surface);border-radius:12px;margin-bottom:18px;border:1px solid var(--brd)}
+        .fsel.on{display:flex}
+        .fsel .fi{font-size:1.8em}
+        .fsel .fn{font-size:.88em;font-weight:600;word-break:break-all}
+        .fsel .fs{font-size:.75em;color:var(--txt3)}
+        .fsel .fr{background:none;border:none;color:var(--err);font-size:1.2em;cursor:pointer;padding:5px}
 
-        .book-cover-wrap img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+        .field{margin-bottom:14px}
+        .field label{display:block;font-size:.82em;color:var(--txt2);margin-bottom:5px;font-weight:500}
+        .field input,.field select{width:100%;padding:11px 16px;background:var(--surface);border:1px solid var(--brd);border-radius:12px;color:var(--txt);font-family:'Lora',serif;font-size:.9em;-webkit-appearance:none;transition:border .3s}
+        .field input:focus,.field select:focus{outline:none;border-color:var(--rose)}
+        .field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239a8eb0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:35px}
 
-        .book-cover-placeholder {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-size: 0.8em;
-            color: var(--text-muted);
-            padding: 15px;
-            text-align: center;
-        }
-
-        .book-cover-placeholder.pdf-cover {
-            background: linear-gradient(135deg, #2a1520, #1a0f18, #2a1520);
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c4566a' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-        }
-
-        .book-cover-placeholder.epub-cover {
-            background: linear-gradient(135deg, #15201a, #0f1a15, #15201a);
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%236ecf8e' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-        }
-
-        .book-cover-placeholder .cover-icon {
-            font-size: 2.8em;
-            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
-        }
-
-        .book-cover-placeholder .cover-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 0.95em;
-            font-weight: 600;
-            color: var(--text-primary);
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            line-height: 1.3;
-        }
-
-        /* Format Badge */
-        .format-badge {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            padding: 3px 10px;
-            border-radius: 10px;
-            font-size: 0.65em;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            z-index: 5;
-        }
-
-        .format-badge.pdf {
-            background: rgba(196,86,106,0.85);
-            color: white;
-        }
-
-        .format-badge.epub {
-            background: rgba(110,207,142,0.85);
-            color: #0a1a0f;
-        }
-
-        /* Progress Ring on Cover */
-        .progress-ring-wrap {
-            position: absolute;
-            bottom: 8px;
-            right: 8px;
-            z-index: 5;
-        }
-
-        .progress-ring-wrap svg {
-            width: 36px;
-            height: 36px;
-            transform: rotate(-90deg);
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-        }
-
-        .progress-ring-bg {
-            fill: rgba(0,0,0,0.5);
-            stroke: rgba(255,255,255,0.15);
-            stroke-width: 3;
-        }
-
-        .progress-ring-fill {
-            fill: none;
-            stroke: var(--rose-light);
-            stroke-width: 3;
-            stroke-linecap: round;
-            transition: stroke-dashoffset 0.5s ease;
-        }
-
-        .progress-ring-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 0.55em;
-            font-weight: 700;
-            color: white;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-        }
-
-        /* Book Info */
-        .book-info {
-            padding: 12px;
-        }
-
-        .book-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 0.9em;
-            font-weight: 600;
-            margin-bottom: 4px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            line-height: 1.3;
-        }
-
-        .book-author {
-            font-size: 0.78em;
-            color: var(--text-secondary);
-            font-style: italic;
-            margin-bottom: 4px;
-        }
-
-        .book-meta-small {
-            font-size: 0.7em;
-            color: var(--text-muted);
-        }
-
-        /* Progress Bar on Card */
-        .book-progress-bar {
-            height: 3px;
-            background: var(--border);
-            border-radius: 2px;
-            margin-top: 8px;
-            overflow: hidden;
-        }
-
-        .book-progress-bar .fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--rose-primary), var(--rose-light));
-            border-radius: 2px;
-            transition: width 0.4s ease;
-        }
-
-        /* Book Actions */
-        .book-actions {
-            display: flex;
-            gap: 6px;
-            padding: 0 12px 12px;
-        }
-
-        .book-actions .btn {
-            flex: 1;
-            padding: 8px 4px;
-            font-size: 0.75em;
-            justify-content: center;
-            border-radius: 10px;
-        }
-
-        /* ===== EMPTY STATE ===== */
-        .empty-state {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 50px 20px;
-        }
-
-        .empty-icon {
-            font-size: 3.5em;
-            margin-bottom: 15px;
-            opacity: 0.6;
-        }
-
-        .empty-state h3 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.2em;
-            color: var(--rose-light);
-            margin-bottom: 8px;
-        }
-
-        .empty-state p {
-            color: var(--text-muted);
-            font-size: 0.9em;
-        }
-
-        /* ===== MODALS ===== */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(5,5,10,0.85);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            z-index: 500;
-            justify-content: center;
-            align-items: flex-end;
-            padding: 0;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .modal-sheet {
-            background: var(--bg-secondary);
-            border-radius: 24px 24px 0 0;
-            width: 100%;
-            max-width: 500px;
-            max-height: 90vh;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            animation: sheetUp 0.35s ease;
-            border: 1px solid var(--border);
-            border-bottom: none;
-        }
-
-        @keyframes sheetUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-        }
-
-        .modal-handle {
-            width: 36px;
-            height: 4px;
-            background: var(--border-light);
-            border-radius: 2px;
-            margin: 12px auto;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 5px 20px 15px;
-        }
-
-        .modal-header h2 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.15em;
-            color: var(--rose-light);
-        }
-
-        .modal-close {
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            font-size: 1em;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-body {
-            padding: 0 20px 30px;
-        }
-
-        /* ===== IMPORT FORM ===== */
-        .drop-area {
-            border: 2px dashed var(--border-light);
-            border-radius: 16px;
-            padding: 35px 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 18px;
-        }
-
-        .drop-area:active, .drop-area.drag-over {
-            border-color: var(--rose-primary);
-            background: rgba(196,86,106,0.05);
-        }
-
-        .drop-area .drop-icon {
-            font-size: 2.5em;
-            margin-bottom: 8px;
-        }
-
-        .drop-area .drop-text {
-            color: var(--text-secondary);
-            font-size: 0.9em;
-        }
-
-        .drop-area .drop-hint {
-            color: var(--text-muted);
-            font-size: 0.75em;
-            margin-top: 4px;
-        }
-
-        .file-selected {
-            display: none;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            background: var(--bg-surface);
-            border-radius: 12px;
-            margin-bottom: 18px;
-            border: 1px solid var(--border);
-        }
-
-        .file-selected.show { display: flex; }
-
-        .file-selected .file-icon { font-size: 1.8em; }
-        .file-selected .file-info { flex: 1; }
-        .file-selected .file-name {
-            font-size: 0.88em;
-            font-weight: 600;
-            word-break: break-all;
-        }
-        .file-selected .file-size {
-            font-size: 0.75em;
-            color: var(--text-muted);
-        }
-        .file-selected .file-remove {
-            background: none;
-            border: none;
-            color: var(--danger);
-            font-size: 1.2em;
-            cursor: pointer;
-            padding: 5px;
-        }
-
-        .form-field {
-            margin-bottom: 14px;
-        }
-
-        .form-field label {
-            display: block;
-            font-size: 0.82em;
-            color: var(--text-secondary);
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
-
-        .form-field input,
-        .form-field select {
-            width: 100%;
-            padding: 11px 16px;
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            color: var(--text-primary);
-            font-family: 'Lora', serif;
-            font-size: 0.9em;
-            -webkit-appearance: none;
-            transition: border-color 0.3s;
-        }
-
-        .form-field input:focus,
-        .form-field select:focus {
-            outline: none;
-            border-color: var(--rose-primary);
-        }
-
-        .form-field select {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239a8eb0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 14px center;
-            padding-right: 35px;
-        }
+        .confirm{text-align:center;padding:10px 0 5px}
+        .confirm .ci{font-size:2.5em;margin-bottom:12px}
+        .confirm p{color:var(--txt2);margin-bottom:20px;font-size:.95em}
+        .confirm strong{color:var(--rose-l)}
+        .confirm-btns{display:flex;gap:10px;justify-content:center}
+        .confirm-btns .btn{min-width:100px;justify-content:center}
 
         /* ===== READER ===== */
-        .reader-screen {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: var(--bg-primary);
-            z-index: 800;
-            flex-direction: column;
+        .reader{display:none;position:fixed;inset:0;background:var(--bg);z-index:800;flex-direction:column}
+        .reader.on{display:flex}
+        .r-top{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--brd);min-height:50px;gap:10px}
+        .r-top .r-title{flex:1;font-family:'Playfair Display',serif;font-size:.9em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .r-prog{height:3px;background:var(--brd)}
+        .r-prog .fill{height:100%;background:linear-gradient(90deg,var(--rose),var(--gold));transition:width .3s;border-radius:0 2px 2px 0}
+        .r-pinfo{text-align:center;font-size:.7em;color:var(--txt3);padding:4px;background:var(--bg2)}
+        .r-body{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}
+
+        /* PDF pages */
+        .pdf-pages{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px;background:#525659}
+        .pdf-pages canvas{max-width:100%;height:auto!important;box-shadow:0 2px 12px rgba(0,0,0,.4)}
+
+        /* EPUB content */
+        .epub-c{max-width:720px;margin:0 auto;padding:25px 20px 80px;line-height:1.9;font-size:1.05em}
+        .epub-c img{max-width:100%;height:auto;border-radius:8px;margin:15px auto;display:block}
+        .epub-c h1,.epub-c h2,.epub-c h3{font-family:'Playfair Display',serif;color:var(--rose-l);margin:25px 0 12px}
+        .epub-c p{margin-bottom:14px;text-align:justify}
+        .epub-c a{color:var(--gold)}
+        .epub-c svg{max-width:100%;height:auto}
+        .epub-c table{border-collapse:collapse;width:100%;margin:10px 0}
+        .epub-c td,.epub-c th{border:1px solid var(--brd);padding:6px 10px;text-align:left}
+
+        /* Reader themes */
+        .r-body.t-dark{background:var(--bg)}
+        .r-body.t-dark .epub-c{color:var(--txt)}
+        .r-body.t-sepia{background:#f4ecd8}
+        .r-body.t-sepia .epub-c{color:#3a2f20}
+        .r-body.t-sepia .epub-c h1,.r-body.t-sepia .epub-c h2,.r-body.t-sepia .epub-c h3{color:#8b4513}
+        .r-body.t-light{background:#fafafa}
+        .r-body.t-light .epub-c{color:#222}
+        .r-body.t-light .epub-c h1,.r-body.t-light .epub-c h2,.r-body.t-light .epub-c h3{color:#8b2e42}
+        .r-body.t-rose{background:#1a0f14}
+        .r-body.t-rose .epub-c{color:#e8d0d8}
+        .r-body.t-rose .epub-c h1,.r-body.t-rose .epub-c h2,.r-body.t-rose .epub-c h3{color:var(--rose-l)}
+
+        .themes{display:none;gap:10px;padding:12px 20px;background:var(--bg2);border-top:1px solid var(--brd);justify-content:center;flex-wrap:wrap}
+        .themes.on{display:flex}
+        .th{width:36px;height:36px;border-radius:50%;border:2px solid var(--brd);cursor:pointer;transition:all .3s}
+        .th:active{transform:scale(.9)}
+        .th.on{border-color:var(--rose);box-shadow:0 0 12px var(--rose-g)}
+        .th.td{background:#0a0a0f}
+        .th.ts{background:#f4ecd8}
+        .th.tl{background:#fafafa}
+        .th.tr{background:#1a0f14}
+
+        .r-bot{display:flex;align-items:center;justify-content:space-around;padding:10px 16px;background:var(--bg2);border-top:1px solid var(--brd);gap:8px}
+        @supports(padding-bottom:env(safe-area-inset-bottom)){.r-bot{padding-bottom:calc(10px + env(safe-area-inset-bottom))}}
+
+        /* Bookmark toast */
+        .bm-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--card);border:1px solid var(--gold-d);color:var(--gold-l);padding:10px 20px;border-radius:12px;font-size:.85em;z-index:900;transition:transform .3s;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis}
+        .bm-toast.on{transform:translateX(-50%) translateY(0)}
+
+        /* Bookmarks panel */
+        .bm-back{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:845}
+        .bm-back.on{display:block}
+        .bm-panel{display:none;position:fixed;top:0;right:0;width:85%;max-width:350px;height:100%;background:var(--bg2);z-index:850;flex-direction:column;border-left:1px solid var(--brd);animation:sir .3s ease}
+        .bm-panel.on{display:flex}
+        @keyframes sir{from{transform:translateX(100%)}to{transform:translateX(0)}}
+        .bm-panel-h{display:flex;justify-content:space-between;align-items:center;padding:20px;border-bottom:1px solid var(--brd)}
+        .bm-panel-h h3{font-family:'Playfair Display',serif;color:var(--gold)}
+        .bm-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px}
+        .bm-item{padding:12px;background:var(--surface);border:1px solid var(--brd);border-radius:12px;margin-bottom:8px;cursor:pointer;transition:all .3s}
+        .bm-item:active{background:var(--card-h);border-color:var(--gold-d)}
+        .bm-item .bmt{font-size:.85em;color:var(--txt);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:6px;font-style:italic;line-height:1.5}
+        .bm-item .bmm{font-size:.72em;color:var(--txt3);display:flex;justify-content:space-between;align-items:center}
+        .bm-item .bmd{color:var(--err);background:none;border:none;font-size:.9em;cursor:pointer;padding:4px 8px}
+
+        /* Loading */
+        .loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--txt3)}
+        .loading .spinner{width:40px;height:40px;border:3px solid var(--brd);border-top-color:var(--rose);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:15px}
+        @keyframes spin{to{transform:rotate(360deg)}}
+
+        /* Toast */
+        .toast-w{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+        .toast-m{padding:10px 20px;border-radius:12px;font-size:.85em;font-family:'Lora',serif;animation:tsi .3s ease,tso .3s ease 2.5s forwards;pointer-events:auto;max-width:300px;text-align:center;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+        .toast-m.ok{background:rgba(110,207,142,.9);color:#0a1a0f}
+        .toast-m.err{background:rgba(207,110,110,.9);color:#1a0a0a}
+        .toast-m.inf{background:rgba(196,86,106,.9);color:#fff}
+        @keyframes tsi{from{opacity:0;transform:translateY(-15px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes tso{to{opacity:0;transform:translateY(-10px)}}
+
+        @media(max-width:400px){
+            .grid{grid-template-columns:repeat(2,1fr);gap:12px;padding:12px 14px 100px}
+            .cover-w{height:180px}
+            .splash-q{font-size:1.25em}
         }
-
-        .reader-screen.active {
-            display: flex;
-        }
-
-        .reader-top-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 16px;
-            background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border);
-            min-height: 50px;
-            gap: 10px;
-        }
-
-        .reader-top-bar .reader-book-title {
-            flex: 1;
-            font-family: 'Playfair Display', serif;
-            font-size: 0.9em;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .reader-top-bar .reader-close {
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            color: var(--text-secondary);
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            font-size: 1em;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .reader-progress-bar {
-            height: 3px;
-            background: var(--border);
-            position: relative;
-        }
-
-        .reader-progress-bar .fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--rose-primary), var(--gold));
-            transition: width 0.3s ease;
-            border-radius: 0 2px 2px 0;
-        }
-
-        .reader-progress-info {
-            text-align: center;
-            font-size: 0.7em;
-            color: var(--text-muted);
-            padding: 4px;
-            background: var(--bg-secondary);
-        }
-
-        .reader-body {
-            flex: 1;
-            overflow: auto;
-            -webkit-overflow-scrolling: touch;
-            position: relative;
-        }
-
-        .reader-body iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            background: white;
-        }
-
-        .epub-reader-content {
-            max-width: 720px;
-            margin: 0 auto;
-            padding: 25px 20px 80px;
-            line-height: 1.9;
-            font-size: 1.05em;
-            color: var(--text-primary);
-        }
-
-        .epub-reader-content img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            margin: 15px 0;
-        }
-
-        .epub-reader-content h1, .epub-reader-content h2, .epub-reader-content h3 {
-            font-family: 'Playfair Display', serif;
-            color: var(--rose-light);
-            margin: 25px 0 12px;
-        }
-
-        .epub-reader-content p {
-            margin-bottom: 14px;
-            text-align: justify;
-        }
-
-        .epub-reader-content a {
-            color: var(--gold);
-        }
-
-        /* Reader Themes */
-        .reader-body.theme-dark {
-            background: var(--bg-primary);
-        }
-
-        .reader-body.theme-sepia {
-            background: #f4ecd8;
-        }
-
-        .reader-body.theme-sepia .epub-reader-content {
-            color: #3a2f20;
-        }
-
-        .reader-body.theme-sepia .epub-reader-content h1,
-        .reader-body.theme-sepia .epub-reader-content h2,
-        .reader-body.theme-sepia .epub-reader-content h3 {
-            color: #8b4513;
-        }
-
-        .reader-body.theme-light {
-            background: #fafafa;
-        }
-
-        .reader-body.theme-light .epub-reader-content {
-            color: #222;
-        }
-
-        .reader-body.theme-light .epub-reader-content h1,
-        .reader-body.theme-light .epub-reader-content h2,
-        .reader-body.theme-light .epub-reader-content h3 {
-            color: #8b2e42;
-        }
-
-        .reader-body.theme-rose {
-            background: #1a0f14;
-        }
-
-        .reader-body.theme-rose .epub-reader-content {
-            color: #e8d0d8;
-        }
-
-        /* Reader Bottom Bar */
-        .reader-bottom-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-around;
-            padding: 10px 16px;
-            background: var(--bg-secondary);
-            border-top: 1px solid var(--border);
-            gap: 8px;
-        }
-
-        .reader-bottom-bar .btn-icon {
-            width: 42px;
-            height: 42px;
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 1.1em;
-        }
-
-        .reader-bottom-bar .btn-icon.active {
-            color: var(--rose-light);
-            border-color: var(--rose-primary);
-            background: rgba(196,86,106,0.1);
-        }
-
-        /* Theme Selector */
-        .theme-selector {
-            display: none;
-            gap: 10px;
-            padding: 12px 20px;
-            background: var(--bg-secondary);
-            border-top: 1px solid var(--border);
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .theme-selector.show { display: flex; }
-
-        .theme-option {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border: 2px solid var(--border);
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .theme-option:active {
-            transform: scale(0.9);
-        }
-
-        .theme-option.active {
-            border-color: var(--rose-primary);
-            box-shadow: 0 0 12px var(--rose-glow);
-        }
-
-        .theme-option.t-dark { background: #0a0a0f; }
-        .theme-option.t-sepia { background: #f4ecd8; }
-        .theme-option.t-light { background: #fafafa; }
-        .theme-option.t-rose { background: #1a0f14; }
-
-        /* Bookmark indicator */
-        .bookmark-toast {
-            position: fixed;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: var(--bg-card);
-            border: 1px solid var(--gold-dark);
-            color: var(--gold-light);
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-size: 0.85em;
-            z-index: 900;
-            transition: transform 0.3s ease;
-            white-space: nowrap;
-        }
-
-        .bookmark-toast.show {
-            transform: translateX(-50%) translateY(0);
-        }
-
-        /* ===== BOOKMARKS PANEL ===== */
-        .bookmarks-panel {
-            display: none;
-            position: fixed;
-            top: 0; right: 0;
-            width: 85%;
-            max-width: 350px;
-            height: 100%;
-            background: var(--bg-secondary);
-            z-index: 850;
-            flex-direction: column;
-            border-left: 1px solid var(--border);
-            animation: slideInRight 0.3s ease;
-        }
-
-        .bookmarks-panel.active { display: flex; }
-
-        @keyframes slideInRight {
-            from { transform: translateX(100%); }
-            to { transform: translateX(0); }
-        }
-
-        .bookmarks-panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .bookmarks-panel-header h3 {
-            font-family: 'Playfair Display', serif;
-            color: var(--gold);
-        }
-
-        .bookmarks-list {
-            flex: 1;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            padding: 10px;
-        }
-
-        .bookmark-item {
-            padding: 12px;
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .bookmark-item:active {
-            background: var(--bg-card-hover);
-            border-color: var(--gold-dark);
-        }
-
-        .bookmark-item .bm-text {
-            font-size: 0.85em;
-            color: var(--text-primary);
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            margin-bottom: 6px;
-            font-style: italic;
-            line-height: 1.5;
-        }
-
-        .bookmark-item .bm-meta {
-            font-size: 0.72em;
-            color: var(--text-muted);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .bookmark-item .bm-delete {
-            color: var(--danger);
-            background: none;
-            border: none;
-            font-size: 0.9em;
-            cursor: pointer;
-            padding: 4px 8px;
-        }
-
-        .bm-panel-backdrop {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 845;
-        }
-
-        .bm-panel-backdrop.active { display: block; }
-
-        /* ===== TOASTS ===== */
-        .toast-wrap {
-            position: fixed;
-            top: 60px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            pointer-events: none;
-        }
-
-        .toast-msg {
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-size: 0.85em;
-            font-family: 'Lora', serif;
-            animation: toastSlide 0.3s ease, toastFade 0.3s ease 2.5s forwards;
-            pointer-events: auto;
-            max-width: 300px;
-            text-align: center;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-        }
-
-        .toast-msg.success {
-            background: rgba(110,207,142,0.9);
-            color: #0a1a0f;
-        }
-
-        .toast-msg.error {
-            background: rgba(207,110,110,0.9);
-            color: #1a0a0a;
-        }
-
-        .toast-msg.info {
-            background: rgba(196,86,106,0.9);
-            color: white;
-        }
-
-        @keyframes toastSlide {
-            from { opacity: 0; transform: translateY(-15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes toastFade {
-            to { opacity: 0; transform: translateY(-10px); }
-        }
-
-        /* ===== CONFIRM MODAL ===== */
-        .confirm-content {
-            text-align: center;
-            padding: 10px 0 5px;
-        }
-
-        .confirm-content .confirm-icon {
-            font-size: 2.5em;
-            margin-bottom: 12px;
-        }
-
-        .confirm-content p {
-            color: var(--text-secondary);
-            margin-bottom: 20px;
-            font-size: 0.95em;
-        }
-
-        .confirm-content strong {
-            color: var(--rose-light);
-        }
-
-        .confirm-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-        }
-
-        .confirm-buttons .btn {
-            min-width: 100px;
-            justify-content: center;
-        }
-
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 400px) {
-            .books-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 12px;
-                padding: 12px 14px 100px;
-            }
-            .book-cover-wrap { height: 180px; }
-            .splash-quote { font-size: 1.25em; }
-        }
-
-        @media (min-width: 768px) {
-            .modal-overlay {
-                align-items: center;
-            }
-            .modal-sheet {
-                border-radius: 24px;
-                max-height: 85vh;
-                margin: 20px;
-            }
-        }
-
-        /* Safari safe area */
-        @supports (padding-bottom: env(safe-area-inset-bottom)) {
-            .reader-bottom-bar {
-                padding-bottom: calc(10px + env(safe-area-inset-bottom));
-            }
+        @media(min-width:768px){
+            .modal{align-items:center}
+            .sheet{border-radius:24px;max-height:85vh;margin:20px}
         }
     </style>
 </head>
 <body>
 
-<!-- ===== SPLASH SCREEN ===== -->
-<div class="splash-screen" id="splashScreen">
-    <div class="splash-bg">
-        <div class="splash-petals" id="splashPetals"></div>
-    </div>
-    <div class="splash-content">
-        <div class="splash-heart">💕</div>
-        <div class="splash-quote" id="splashQuote">"..."</div>
-        <div class="splash-author" id="splashAuthor">—</div>
-        <button class="splash-enter" onclick="enterLibrary()">Entrar a la Biblioteca ✨</button>
+<!-- SPLASH -->
+<div class="splash" id="splash">
+    <div class="splash-bg"><div class="splash-petals" id="petals"></div></div>
+    <div class="splash-c">
+        <div class="splash-h">💕</div>
+        <div class="splash-q" id="sQuote">"..."</div>
+        <div class="splash-a" id="sAuthor">—</div>
+        <button class="splash-btn" onclick="enterApp()">Entrar a la Biblioteca ✨</button>
     </div>
 </div>
 
-<!-- ===== MAIN APP ===== -->
-<header class="app-header">
-    <div class="app-title">📚 Mi Biblioteca de Amor</div>
-    <div class="app-subtitle">Cada página, un suspiro por ti</div>
+<!-- HEADER -->
+<header class="hdr">
+    <h1>📚 Mi Biblioteca de Amor</h1>
+    <p>Cada página, un suspiro por ti</p>
 </header>
 
+<!-- TOOLBAR -->
 <div class="toolbar">
-    <div class="search-wrapper">
-        <input type="text" id="searchInput" placeholder="Buscar entre tus libros...">
-    </div>
-    <button class="btn btn-rose" onclick="openImportModal()">📥 Importar</button>
+    <div class="search-w"><input type="text" id="searchIn" placeholder="Buscar entre tus libros..."></div>
+    <button class="btn btn-r" onclick="openImport()">📥 Importar</button>
 </div>
 
-<div class="tabs" id="tabsBar">
-    <button class="tab active" onclick="setFilter('all', this)">📚 Todos</button>
-    <button class="tab" onclick="setFilter('favorites', this)">💕 Favoritos</button>
-    <button class="tab" onclick="setFilter('pdf', this)">📕 PDF</button>
-    <button class="tab" onclick="setFilter('epub', this)">📗 EPUB</button>
-    <button class="tab" onclick="setFilter('reading', this)">📖 Leyendo</button>
+<!-- TABS -->
+<div class="tabs">
+    <button class="tab on" onclick="setTab('all',this)">📚 Todos</button>
+    <button class="tab" onclick="setTab('fav',this)">💕 Favoritos</button>
+    <button class="tab" onclick="setTab('pdf',this)">📕 PDF</button>
+    <button class="tab" onclick="setTab('epub',this)">📗 EPUB</button>
+    <button class="tab" onclick="setTab('reading',this)">📖 Leyendo</button>
 </div>
 
-<div class="stats-bar" id="statsBar">
-    <span class="stat-item">📚 <span id="statTotal">0</span> libros</span>
-    <span class="stat-item">💕 <span id="statFavs">0</span> favoritos</span>
-    <span class="stat-item">📖 <span id="statReading">0</span> leyendo</span>
+<!-- STATS -->
+<div class="stats">
+    <span>📚 <span id="sAll">0</span> libros</span>
+    <span>💕 <span id="sFav">0</span> favoritos</span>
+    <span>📖 <span id="sRead">0</span> leyendo</span>
 </div>
 
-<div class="books-grid" id="booksGrid"></div>
+<!-- GRID -->
+<div class="grid" id="grid"></div>
 
-<!-- ===== IMPORT MODAL ===== -->
-<div class="modal-overlay" id="importModal">
-    <div class="modal-sheet">
-        <div class="modal-handle"></div>
-        <div class="modal-header">
-            <h2>🌹 Añadir Libro</h2>
-            <button class="modal-close" onclick="closeImportModal()">✕</button>
-        </div>
-        <div class="modal-body">
-            <div class="drop-area" id="dropArea" onclick="document.getElementById('fileInput').click()">
-                <div class="drop-icon">📂</div>
-                <div class="drop-text">Toca para elegir archivo</div>
-                <div class="drop-hint">Acepta PDF y EPUB</div>
+<!-- IMPORT MODAL -->
+<div class="modal" id="importMod">
+    <div class="sheet">
+        <div class="sheet-bar"></div>
+        <div class="sheet-hdr"><h2>🌹 Añadir Libro</h2><button class="x-btn" onclick="closeImport()">✕</button></div>
+        <div class="sheet-body">
+            <div class="drop" id="dropArea" onclick="$('fileIn').click()">
+                <div class="di">📂</div>
+                <div class="dt">Toca para elegir archivo</div>
+                <div class="dh">Acepta PDF y EPUB</div>
             </div>
-            <input type="file" id="fileInput" accept=".pdf,.epub" style="display:none">
-
-            <div class="file-selected" id="fileSelected">
-                <div class="file-icon" id="selFileIcon">📄</div>
-                <div class="file-info">
-                    <div class="file-name" id="selFileName">-</div>
-                    <div class="file-size" id="selFileSize">-</div>
-                </div>
-                <button class="file-remove" onclick="clearFile()">✕</button>
+            <input type="file" id="fileIn" accept=".pdf,.epub" style="display:none">
+            <div class="fsel" id="fsel">
+                <div class="fi" id="fselI">📄</div>
+                <div style="flex:1"><div class="fn" id="fselN">-</div><div class="fs" id="fselS">-</div></div>
+                <button class="fr" onclick="clearFile()">✕</button>
             </div>
-
-            <div class="form-field">
-                <label>Título</label>
-                <input type="text" id="inputTitle" placeholder="Nombre del libro">
-            </div>
-            <div class="form-field">
-                <label>Autor/a</label>
-                <input type="text" id="inputAuthor" placeholder="Quien lo escribió">
-            </div>
-            <div class="form-field">
-                <label>Categoría</label>
-                <select id="inputCategory">
+            <div class="field"><label>Título</label><input type="text" id="inTitle" placeholder="Nombre del libro"></div>
+            <div class="field"><label>Autor/a</label><input type="text" id="inAuthor" placeholder="Quien lo escribió"></div>
+            <div class="field"><label>Categoría</label>
+                <select id="inCat">
                     <option value="Romance">💕 Romance</option>
                     <option value="Dark Romance">🖤 Dark Romance</option>
                     <option value="Fantasía">✨ Fantasía</option>
@@ -1339,889 +323,202 @@
                     <option value="Otro">📖 Otro</option>
                 </select>
             </div>
-
-            <button class="btn btn-rose" style="width:100%;justify-content:center;margin-top:8px;padding:14px;" onclick="saveBook()">
-                🌹 Guardar en mi Biblioteca
-            </button>
+            <button class="btn btn-r" style="width:100%;justify-content:center;padding:14px;margin-top:8px" onclick="saveBook()">🌹 Guardar en mi Biblioteca</button>
         </div>
     </div>
 </div>
 
-<!-- ===== DELETE CONFIRM ===== -->
-<div class="modal-overlay" id="deleteModal">
-    <div class="modal-sheet">
-        <div class="modal-handle"></div>
-        <div class="modal-body">
-            <div class="confirm-content">
-                <div class="confirm-icon">🥀</div>
-                <p>¿Eliminar <strong id="delBookName">este libro</strong> de tu biblioteca?</p>
-                <div class="confirm-buttons">
-                    <button class="btn btn-danger" onclick="confirmDeleteBook()">Eliminar</button>
-                    <button class="btn btn-ghost" onclick="closeDeleteModal()">Cancelar</button>
+<!-- DELETE MODAL -->
+<div class="modal" id="delMod">
+    <div class="sheet">
+        <div class="sheet-bar"></div>
+        <div class="sheet-body">
+            <div class="confirm">
+                <div class="ci">🥀</div>
+                <p>¿Eliminar <strong id="delName">este libro</strong>?</p>
+                <div class="confirm-btns">
+                    <button class="btn btn-d" onclick="confirmDel()">Eliminar</button>
+                    <button class="btn btn-gh" onclick="closeDel()">Cancelar</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ===== READER ===== -->
-<div class="reader-screen" id="readerScreen">
-    <div class="reader-top-bar">
-        <span class="reader-book-title" id="readerBookTitle">—</span>
-        <button class="reader-close" onclick="closeReader()">✕</button>
+<!-- READER -->
+<div class="reader" id="reader">
+    <div class="r-top">
+        <span class="r-title" id="rTitle">—</span>
+        <button class="x-btn" onclick="closeReader()">✕</button>
     </div>
-    <div class="reader-progress-bar">
-        <div class="fill" id="readerProgressFill" style="width:0%"></div>
+    <div class="r-prog"><div class="fill" id="rProgFill" style="width:0%"></div></div>
+    <div class="r-pinfo" id="rProgInfo">0%</div>
+    <div class="r-body t-dark" id="rBody"></div>
+    <div class="themes" id="themePanel">
+        <div class="th td on" onclick="setTheme('dark',this)"></div>
+        <div class="th ts" onclick="setTheme('sepia',this)"></div>
+        <div class="th tl" onclick="setTheme('light',this)"></div>
+        <div class="th tr" onclick="setTheme('rose',this)"></div>
     </div>
-    <div class="reader-progress-info" id="readerProgressInfo">0%</div>
-
-    <div class="reader-body theme-dark" id="readerBody"></div>
-
-    <div class="theme-selector" id="themeSelector">
-        <div class="theme-option t-dark active" onclick="setReaderTheme('dark', this)" title="Oscuro"></div>
-        <div class="theme-option t-sepia" onclick="setReaderTheme('sepia', this)" title="Sepia"></div>
-        <div class="theme-option t-light" onclick="setReaderTheme('light', this)" title="Claro"></div>
-        <div class="theme-option t-rose" onclick="setReaderTheme('rose', this)" title="Rosado"></div>
-    </div>
-
-    <div class="reader-bottom-bar">
-        <button class="btn-icon" id="btnPrevSection" onclick="epubPrev()" title="Anterior">◀</button>
-        <button class="btn-icon" id="btnBookmark" onclick="addBookmark()" title="Marcador">🔖</button>
-        <button class="btn-icon" id="btnThemeToggle" onclick="toggleThemePanel()" title="Tema">🎨</button>
-        <button class="btn-icon" id="btnBookmarks" onclick="toggleBookmarksPanel()" title="Marcadores">📑</button>
-        <button class="btn-icon" id="btnNextSection" onclick="epubNext()" title="Siguiente">▶</button>
+    <div class="r-bot">
+        <button class="btn-icon" id="bPrev" onclick="epubPrev()">◀</button>
+        <button class="btn-icon" id="bBm" onclick="addBm()">🔖</button>
+        <button class="btn-icon" id="bTh" onclick="toggleTh()">🎨</button>
+        <button class="btn-icon" id="bBms" onclick="toggleBmPanel()">📑</button>
+        <button class="btn-icon" id="bNext" onclick="epubNext()">▶</button>
     </div>
 </div>
 
-<!-- BOOKMARK TOAST -->
-<div class="bookmark-toast" id="bookmarkToast">🔖 Marcador guardado</div>
+<!-- BM TOAST -->
+<div class="bm-toast" id="bmToast">🔖 Marcador guardado</div>
 
 <!-- BOOKMARKS PANEL -->
-<div class="bm-panel-backdrop" id="bmBackdrop" onclick="toggleBookmarksPanel()"></div>
-<div class="bookmarks-panel" id="bookmarksPanel">
-    <div class="bookmarks-panel-header">
-        <h3>🔖 Marcadores</h3>
-        <button class="modal-close" onclick="toggleBookmarksPanel()">✕</button>
-    </div>
-    <div class="bookmarks-list" id="bookmarksList"></div>
+<div class="bm-back" id="bmBack" onclick="toggleBmPanel()"></div>
+<div class="bm-panel" id="bmPanel">
+    <div class="bm-panel-h"><h3>🔖 Marcadores</h3><button class="x-btn" onclick="toggleBmPanel()">✕</button></div>
+    <div class="bm-list" id="bmList"></div>
 </div>
 
 <!-- TOASTS -->
-<div class="toast-wrap" id="toastWrap"></div>
+<div class="toast-w" id="toastW"></div>
 
 <script>
-// ==========================================
-// ROMANTIC QUOTES
-// ==========================================
-const QUOTES = [
-    { text: "En tus ojos encontré la biblioteca más hermosa, donde cada mirada es un poema.", author: "Para ti, mi amor" },
-    { text: "Eres mi capítulo favorito en este libro llamado vida.", author: "Tu eterno lector" },
-    { text: "Si nuestro amor fuera un libro, cada página tendría un beso.", author: "De mi corazón al tuyo" },
-    { text: "Te amo no solo por lo que eres, sino por lo que soy cuando estoy contigo.", author: "Roy Croft" },
-    { text: "Cada historia de amor es hermosa, pero la nuestra es mi favorita.", author: "Para siempre tuyo" },
-    { text: "Eres la poesía que siempre quise escribir y la historia que siempre quise leer.", author: "Tu corazón" },
-    { text: "Si tuviera una flor por cada vez que pienso en ti, caminaría por un jardín infinito.", author: "Alfred Tennyson" },
-    { text: "Contigo aprendí que los finales felices no están en los libros, están en tus abrazos.", author: "Mi alma gemela" },
-    { text: "Eres mi una vez upon a time y mi happily ever after.", author: "Tu historia de amor" },
-    { text: "No necesito un libro de fantasía cuando la magia existe en tu sonrisa.", author: "Tuyo, siempre" },
-    { text: "Que nuestro amor sea como un buen libro: que no quieras soltar nunca.", author: "Con todo mi amor" },
-    { text: "En cada página que leas, recuerda que entre líneas siempre estará mi amor por ti.", author: "Tu compañero de lectura" },
-    { text: "Eres el bookmark que marca el lugar más feliz de mi vida.", author: "Tu fan #1" },
-    { text: "Mi amor por ti no tiene última página.", author: "Para siempre" },
-    { text: "Amar no es mirarse el uno al otro, es mirar juntos en la misma dirección.", author: "Saint-Exupéry" },
-    { text: "Cada noche, antes de dormir, pienso en ti. Eres mi cuento favorito.", author: "Tu soñador" },
-    { text: "Eres la razón por la que creo en las historias de amor.", author: "Desde mi corazón" },
-    { text: "Si el amor fuera tinta, te escribiría en cada rincón del universo.", author: "Infinitamente tuyo" },
-    { text: "Contigo cada momento es un verso que quiero guardar para siempre.", author: "Tu poeta" },
-    { text: "No eres solo mi amor, eres mi aventura favorita.", author: "Tu compañero de vida" }
+// Configure PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+const $=id=>document.getElementById(id);
+
+// ===== QUOTES =====
+const QUOTES=[
+    {t:"En tus ojos encontré la biblioteca más hermosa, donde cada mirada es un poema.",a:"Para ti, mi amor"},
+    {t:"Eres mi capítulo favorito en este libro llamado vida.",a:"Tu eterno lector"},
+    {t:"Si nuestro amor fuera un libro, cada página tendría un beso.",a:"De mi corazón al tuyo"},
+    {t:"Te amo no solo por lo que eres, sino por lo que soy cuando estoy contigo.",a:"Roy Croft"},
+    {t:"Cada historia de amor es hermosa, pero la nuestra es mi favorita.",a:"Para siempre tuyo"},
+    {t:"Eres la poesía que siempre quise escribir y la historia que siempre quise leer.",a:"Tu corazón"},
+    {t:"Si tuviera una flor por cada vez que pienso en ti, caminaría por un jardín infinito.",a:"Alfred Tennyson"},
+    {t:"Contigo aprendí que los finales felices no están en los libros, están en tus abrazos.",a:"Mi alma gemela"},
+    {t:"No necesito un libro de fantasía cuando la magia existe en tu sonrisa.",a:"Tuyo, siempre"},
+    {t:"Que nuestro amor sea como un buen libro: que no quieras soltar nunca.",a:"Con todo mi amor"},
+    {t:"En cada página que leas, recuerda que entre líneas siempre estará mi amor por ti.",a:"Tu compañero de lectura"},
+    {t:"Mi amor por ti no tiene última página.",a:"Para siempre"},
+    {t:"Amar no es mirarse el uno al otro, es mirar juntos en la misma dirección.",a:"Saint-Exupéry"},
+    {t:"Cada noche, antes de dormir, pienso en ti. Eres mi cuento favorito.",a:"Tu soñador"},
+    {t:"Eres la razón por la que creo en las historias de amor.",a:"Desde mi corazón"},
+    {t:"Si el amor fuera tinta, te escribiría en cada rincón del universo.",a:"Infinitamente tuyo"},
+    {t:"Contigo cada momento es un verso que quiero guardar para siempre.",a:"Tu poeta"},
+    {t:"No eres solo mi amor, eres mi aventura favorita.",a:"Tu compañero de vida"},
+    {t:"Eres el bookmark que marca el lugar más feliz de mi vida.",a:"Tu fan #1"},
+    {t:"Eres mi una vez upon a time y mi happily ever after.",a:"Tu historia de amor"}
 ];
 
-// ==========================================
-// DATABASE (IndexedDB)
-// ==========================================
-const DB_NAME = 'RomanticLibraryDB';
-const DB_VER = 2;
-const STORE = 'books';
-let db = null;
+// ===== DB =====
+const DB='RomLib';const VER=2;const ST='books';let db=null;
 
-function openDB() {
-    return new Promise((res, rej) => {
-        const rq = indexedDB.open(DB_NAME, DB_VER);
-        rq.onerror = () => rej(rq.error);
-        rq.onsuccess = () => { db = rq.result; res(db); };
-        rq.onupgradeneeded = e => {
-            const d = e.target.result;
-            if (!d.objectStoreNames.contains(STORE)) {
-                d.createObjectStore(STORE, { keyPath: 'id' });
-            }
-        };
+function openDB(){
+    return new Promise((r,j)=>{
+        const rq=indexedDB.open(DB,VER);
+        rq.onerror=()=>j(rq.error);
+        rq.onsuccess=()=>{db=rq.result;r(db)};
+        rq.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains(ST))d.createObjectStore(ST,{keyPath:'id'})};
     });
 }
+function put(b){return new Promise((r,j)=>{const tx=db.transaction(ST,'readwrite');tx.objectStore(ST).put(b);tx.oncomplete=()=>r();tx.onerror=()=>j(tx.error)})}
+function getAll(){return new Promise((r,j)=>{const tx=db.transaction(ST,'readonly');const rq=tx.objectStore(ST).getAll();rq.onsuccess=()=>r(rq.result);rq.onerror=()=>j(rq.error)})}
+function getOne(id){return new Promise((r,j)=>{const tx=db.transaction(ST,'readonly');const rq=tx.objectStore(ST).get(id);rq.onsuccess=()=>r(rq.result);rq.onerror=()=>j(rq.error)})}
+function del(id){return new Promise((r,j)=>{const tx=db.transaction(ST,'readwrite');tx.objectStore(ST).delete(id);tx.oncomplete=()=>r();tx.onerror=()=>j(tx.error)})}
 
-function dbPut(book) {
-    return new Promise((res, rej) => {
-        const tx = db.transaction(STORE, 'readwrite');
-        tx.objectStore(STORE).put(book);
-        tx.oncomplete = () => res();
-        tx.onerror = () => rej(tx.error);
-    });
+// ===== GLOBALS =====
+let selFile=null,selData=null,curFilter='all',delId=null;
+let curBookId=null,epubSecs=[],epubIdx=0,epubImgs={};
+
+// ===== SPLASH =====
+function initSplash(){
+    const q=QUOTES[Math.floor(Math.random()*QUOTES.length)];
+    $('sQuote').textContent=`"${q.t}"`;
+    $('sAuthor').textContent=`— ${q.a}`;
+    const p=$('petals');const em=['🌹','🥀','💗','🌸','💕','✨','🦋'];
+    for(let i=0;i<15;i++){const d=document.createElement('div');d.className='petal';d.textContent=em[Math.floor(Math.random()*em.length)];d.style.left=Math.random()*100+'%';d.style.animationDuration=(4+Math.random()*6)+'s';d.style.animationDelay=Math.random()*5+'s';d.style.fontSize=(.8+Math.random())+'em';p.appendChild(d)}
+}
+function enterApp(){const s=$('splash');s.classList.add('hide');setTimeout(()=>s.style.display='none',800)}
+
+// ===== TOAST =====
+function toast(m,t='inf'){const w=$('toastW');const d=document.createElement('div');d.className=`toast-m ${t}`;d.textContent=m;w.appendChild(d);setTimeout(()=>d.remove(),3000)}
+
+// ===== IMPORT =====
+function openImport(){$('importMod').classList.add('on');clearFile();$('inTitle').value='';$('inAuthor').value='';$('inCat').value='Romance'}
+function closeImport(){$('importMod').classList.remove('on')}
+
+$('fileIn').addEventListener('change',e=>{if(e.target.files[0])pickFile(e.target.files[0])});
+const da=$('dropArea');
+da.addEventListener('dragover',e=>{e.preventDefault();da.classList.add('over')});
+da.addEventListener('dragleave',()=>da.classList.remove('over'));
+da.addEventListener('drop',e=>{e.preventDefault();da.classList.remove('over');if(e.dataTransfer.files[0])pickFile(e.dataTransfer.files[0])});
+
+function pickFile(f){
+    const ext=f.name.split('.').pop().toLowerCase();
+    if(ext!=='pdf'&&ext!=='epub'){toast('Solo PDF y EPUB 🌹','err');return}
+    selFile=f;
+    $('dropArea').style.display='none';
+    $('fsel').classList.add('on');
+    $('fselI').textContent=ext==='pdf'?'📕':'📗';
+    $('fselN').textContent=f.name;
+    $('fselS').textContent=fmtSz(f.size);
+    $('inTitle').value=f.name.replace(/\.(pdf|epub)$/i,'').replace(/[_\-\.]/g,' ');
+    const rd=new FileReader();
+    rd.onload=e=>{selData=e.target.result};
+    rd.readAsArrayBuffer(f);
 }
 
-function dbGetAll() {
-    return new Promise((res, rej) => {
-        const tx = db.transaction(STORE, 'readonly');
-        const rq = tx.objectStore(STORE).getAll();
-        rq.onsuccess = () => res(rq.result);
-        rq.onerror = () => rej(rq.error);
-    });
-}
+function clearFile(){selFile=null;selData=null;$('fileIn').value='';$('fsel').classList.remove('on');$('dropArea').style.display=''}
 
-function dbGet(id) {
-    return new Promise((res, rej) => {
-        const tx = db.transaction(STORE, 'readonly');
-        const rq = tx.objectStore(STORE).get(id);
-        rq.onsuccess = () => res(rq.result);
-        rq.onerror = () => rej(rq.error);
-    });
-}
+async function saveBook(){
+    if(!selFile||!selData){toast('Selecciona un archivo 📂','err');return}
+    const title=$('inTitle').value.trim()||selFile.name;
+    const author=$('inAuthor').value.trim()||'Desconocido';
+    const cat=$('inCat').value;
+    const ext=selFile.name.split('.').pop().toLowerCase();
 
-function dbDelete(id) {
-    return new Promise((res, rej) => {
-        const tx = db.transaction(STORE, 'readwrite');
-        tx.objectStore(STORE).delete(id);
-        tx.oncomplete = () => res();
-        tx.onerror = () => rej(tx.error);
-    });
-}
-
-// ==========================================
-// GLOBALS
-// ==========================================
-let selectedFileObj = null;
-let selectedFileData = null;
-let currentFilter = 'all';
-let deleteTargetId = null;
-
-// Reader state
-let currentBookId = null;
-let epubSections = [];
-let epubCurrentIdx = 0;
-let epubImages = {};
-let currentReaderTheme = 'dark';
-
-// ==========================================
-// SPLASH SCREEN
-// ==========================================
-function initSplash() {
-    const q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
-    document.getElementById('splashQuote').textContent = `"${q.text}"`;
-    document.getElementById('splashAuthor').textContent = `— ${q.author}`;
-
-    // Create falling petals
-    const petalsContainer = document.getElementById('splashPetals');
-    const petalEmojis = ['🌹', '🥀', '💗', '🌸', '💕', '✨', '🦋'];
-    for (let i = 0; i < 15; i++) {
-        const petal = document.createElement('div');
-        petal.className = 'petal';
-        petal.textContent = petalEmojis[Math.floor(Math.random() * petalEmojis.length)];
-        petal.style.left = Math.random() * 100 + '%';
-        petal.style.animationDuration = (4 + Math.random() * 6) + 's';
-        petal.style.animationDelay = Math.random() * 5 + 's';
-        petal.style.fontSize = (0.8 + Math.random() * 1) + 'em';
-        petalsContainer.appendChild(petal);
-    }
-}
-
-function enterLibrary() {
-    const splash = document.getElementById('splashScreen');
-    splash.classList.add('fade-out');
-    setTimeout(() => splash.style.display = 'none', 800);
-}
-
-// ==========================================
-// TOAST
-// ==========================================
-function toast(msg, type = 'info') {
-    const wrap = document.getElementById('toastWrap');
-    const t = document.createElement('div');
-    t.className = `toast-msg ${type}`;
-    t.textContent = msg;
-    wrap.appendChild(t);
-    setTimeout(() => t.remove(), 3000);
-}
-
-// ==========================================
-// IMPORT MODAL
-// ==========================================
-function openImportModal() {
-    document.getElementById('importModal').classList.add('active');
-    clearFile();
-    document.getElementById('inputTitle').value = '';
-    document.getElementById('inputAuthor').value = '';
-    document.getElementById('inputCategory').value = 'Romance';
-}
-
-function closeImportModal() {
-    document.getElementById('importModal').classList.remove('active');
-}
-
-document.getElementById('fileInput').addEventListener('change', e => {
-    if (e.target.files[0]) processSelectedFile(e.target.files[0]);
-});
-
-const dropArea = document.getElementById('dropArea');
-dropArea.addEventListener('dragover', e => { e.preventDefault(); dropArea.classList.add('drag-over'); });
-dropArea.addEventListener('dragleave', () => dropArea.classList.remove('drag-over'));
-dropArea.addEventListener('drop', e => {
-    e.preventDefault();
-    dropArea.classList.remove('drag-over');
-    if (e.dataTransfer.files[0]) processSelectedFile(e.dataTransfer.files[0]);
-});
-
-function processSelectedFile(file) {
-    const ext = file.name.split('.').pop().toLowerCase();
-    if (ext !== 'pdf' && ext !== 'epub') {
-        toast('Solo PDF y EPUB, mi amor 🌹', 'error');
-        return;
-    }
-    selectedFileObj = file;
-
-    document.getElementById('dropArea').style.display = 'none';
-    const sel = document.getElementById('fileSelected');
-    sel.classList.add('show');
-    document.getElementById('selFileIcon').textContent = ext === 'pdf' ? '📕' : '📗';
-    document.getElementById('selFileName').textContent = file.name;
-    document.getElementById('selFileSize').textContent = fmtSize(file.size);
-
-    const titleClean = file.name.replace(/\.(pdf|epub)$/i, '').replace(/[_\-\.]/g, ' ');
-    document.getElementById('inputTitle').value = titleClean;
-
-    const reader = new FileReader();
-    reader.onload = e => { selectedFileData = e.target.result; };
-    reader.readAsDataURL(file);
-}
-
-function clearFile() {
-    selectedFileObj = null;
-    selectedFileData = null;
-    document.getElementById('fileInput').value = '';
-    document.getElementById('fileSelected').classList.remove('show');
-    document.getElementById('dropArea').style.display = '';
-}
-
-async function saveBook() {
-    if (!selectedFileObj || !selectedFileData) {
-        toast('Selecciona un archivo primero 📂', 'error');
-        return;
-    }
-
-    const title = document.getElementById('inputTitle').value.trim() || selectedFileObj.name;
-    const author = document.getElementById('inputAuthor').value.trim() || 'Desconocido';
-    const category = document.getElementById('inputCategory').value;
-    const ext = selectedFileObj.name.split('.').pop().toLowerCase();
-
-    const book = {
-        id: 'b_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
-        title, author, category,
-        format: ext,
-        fileName: selectedFileObj.name,
-        fileSize: selectedFileObj.size,
-        fileData: selectedFileData,
-        dateAdded: new Date().toISOString(),
-        favorite: false,
-        progress: 0,
-        bookmarks: [],
-        lastSection: 0
+    // Store as ArrayBuffer
+    const book={
+        id:'b_'+Date.now()+'_'+Math.random().toString(36).substr(2,6),
+        title,author,category:cat,format:ext,
+        fileName:selFile.name,fileSize:selFile.size,
+        fileData:selData, // ArrayBuffer
+        dateAdded:new Date().toISOString(),
+        favorite:false,progress:0,bookmarks:[],lastSection:0,lastScroll:0
     };
-
-    try {
-        await dbPut(book);
-        toast(`"${title}" guardado con amor 💕`, 'success');
-        closeImportModal();
-        renderLibrary();
-    } catch (err) {
-        toast('Error al guardar 😢', 'error');
-        console.error(err);
-    }
+    try{
+        await put(book);
+        toast(`"${title}" guardado con amor 💕`,'ok');
+        closeImport();render();
+    }catch(e){toast('Error al guardar 😢','err');console.error(e)}
 }
 
-// ==========================================
-// RENDER LIBRARY
-// ==========================================
-async function renderLibrary() {
-    try {
-        let books = await dbGetAll();
-        const search = document.getElementById('searchInput').value.toLowerCase();
+// ===== RENDER =====
+async function render(){
+    try{
+        let books=await getAll();
+        const q=$('searchIn').value.toLowerCase();
+        $('sAll').textContent=books.length;
+        $('sFav').textContent=books.filter(b=>b.favorite).length;
+        $('sRead').textContent=books.filter(b=>b.progress>0&&b.progress<100).length;
 
-        // Stats
-        const allBooks = books;
-        document.getElementById('statTotal').textContent = allBooks.length;
-        document.getElementById('statFavs').textContent = allBooks.filter(b => b.favorite).length;
-        document.getElementById('statReading').textContent = allBooks.filter(b => b.progress > 0 && b.progress < 100).length;
+        if(curFilter==='fav')books=books.filter(b=>b.favorite);
+        else if(curFilter==='pdf')books=books.filter(b=>b.format==='pdf');
+        else if(curFilter==='epub')books=books.filter(b=>b.format==='epub');
+        else if(curFilter==='reading')books=books.filter(b=>b.progress>0&&b.progress<100);
 
-        // Filter
-        if (currentFilter === 'favorites') books = books.filter(b => b.favorite);
-        else if (currentFilter === 'pdf') books = books.filter(b => b.format === 'pdf');
-        else if (currentFilter === 'epub') books = books.filter(b => b.format === 'epub');
-        else if (currentFilter === 'reading') books = books.filter(b => b.progress > 0 && b.progress < 100);
+        if(q)books=books.filter(b=>b.title.toLowerCase().includes(q)||b.author.toLowerCase().includes(q)||b.category.toLowerCase().includes(q));
+        books.sort((a,b)=>new Date(b.dateAdded)-new Date(a.dateAdded));
 
-        // Search
-        if (search) {
-            books = books.filter(b =>
-                b.title.toLowerCase().includes(search) ||
-                b.author.toLowerCase().includes(search) ||
-                b.category.toLowerCase().includes(search)
-            );
-        }
-
-        // Sort
-        books.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
-
-        const grid = document.getElementById('booksGrid');
-
-        if (books.length === 0) {
-            grid.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">🌹</div>
-                    <h3>${search || currentFilter !== 'all' ? 'No encontré nada, mi amor' : 'Tu biblioteca espera su primer libro'}</h3>
-                    <p>${search || currentFilter !== 'all' ? 'Intenta con otra búsqueda o filtro' : 'Toca "Importar" para comenzar esta aventura 💕'}</p>
-                </div>`;
+        const g=$('grid');
+        if(!books.length){
+            g.innerHTML=`<div class="empty"><div class="ei">🌹</div><h3>${q||curFilter!=='all'?'No encontré nada, mi amor':'Tu biblioteca espera su primer libro'}</h3><p>${q||curFilter!=='all'?'Intenta con otra búsqueda':'Toca "Importar" para comenzar 💕'}</p></div>`;
             return;
         }
 
-        grid.innerHTML = books.map(book => {
-            const pct = Math.round(book.progress || 0);
-            const circumference = 2 * Math.PI * 14;
-            const offset = circumference - (pct / 100) * circumference;
-
-            return `
-            <div class="book-card ${book.favorite ? 'favorite' : ''}">
-                <div class="book-cover-wrap">
-                    <div class="book-cover-placeholder ${book.format}-cover">
-                        <span class="cover-icon">${book.format === 'pdf' ? '📕' : '📗'}</span>
-                        <span class="cover-title">${esc(book.title)}</span>
-                    </div>
-                    <span class="format-badge ${book.format}">${book.format}</span>
-                    ${pct > 0 ? `
-                    <div class="progress-ring-wrap">
-                        <svg viewBox="0 0 36 36">
-                            <circle class="progress-ring-bg" cx="18" cy="18" r="14"/>
-                            <circle class="progress-ring-fill" cx="18" cy="18" r="14"
-                                stroke-dasharray="${circumference}"
-                                stroke-dashoffset="${offset}"/>
-                        </svg>
-                        <span class="progress-ring-text">${pct}%</span>
-                    </div>` : ''}
-                </div>
-                <div class="book-info">
-                    <div class="book-title">${esc(book.title)}</div>
-                    <div class="book-author">✍️ ${esc(book.author)}</div>
-                    <div class="book-meta-small">${book.category} · ${fmtSize(book.fileSize)}</div>
-                    ${pct > 0 ? `<div class="book-progress-bar"><div class="fill" style="width:${pct}%"></div></div>` : ''}
-                </div>
-                <div class="book-actions">
-                    <button class="btn btn-rose btn-sm" onclick="openReader('${book.id}')">📖 Leer</button>
-                    <button class="btn btn-sm ${book.favorite ? 'btn-gold' : 'btn-ghost'}" onclick="toggleFav('${book.id}')">
-                        ${book.favorite ? '💕' : '🤍'}
-                    </button>
-                    <button class="btn btn-ghost btn-sm" onclick="openDeleteModal('${book.id}','${esc(book.title)}')">🗑️</button>
-                </div>
-            </div>`;
-        }).join('');
-    } catch (err) {
-        console.error(err);
-    }
-}
-
-function setFilter(f, btn) {
-    currentFilter = f;
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    if (btn) btn.classList.add('active');
-    renderLibrary();
-}
-
-document.getElementById('searchInput').addEventListener('input', () => renderLibrary());
-
-// ==========================================
-// FAVORITES
-// ==========================================
-async function toggleFav(id) {
-    const book = await dbGet(id);
-    if (!book) return;
-    book.favorite = !book.favorite;
-    await dbPut(book);
-    toast(book.favorite ? '💕 Añadido a favoritos' : '🤍 Quitado de favoritos', book.favorite ? 'success' : 'info');
-    renderLibrary();
-}
-
-// ==========================================
-// DELETE
-// ==========================================
-function openDeleteModal(id, title) {
-    deleteTargetId = id;
-    document.getElementById('delBookName').textContent = title;
-    document.getElementById('deleteModal').classList.add('active');
-}
-
-function closeDeleteModal() {
-    deleteTargetId = null;
-    document.getElementById('deleteModal').classList.remove('active');
-}
-
-async function confirmDeleteBook() {
-    if (!deleteTargetId) return;
-    await dbDelete(deleteTargetId);
-    toast('Libro eliminado 🥀', 'info');
-    closeDeleteModal();
-    renderLibrary();
-}
-
-// ==========================================
-// READER
-// ==========================================
-async function openReader(id) {
-    try {
-        const book = await dbGet(id);
-        if (!book) { toast('Libro no encontrado', 'error'); return; }
-
-        currentBookId = id;
-        document.getElementById('readerBookTitle').textContent = book.title;
-        const body = document.getElementById('readerBody');
-        const epubNavBtns = document.querySelectorAll('#btnPrevSection, #btnNextSection');
-
-        if (book.format === 'pdf') {
-            epubNavBtns.forEach(b => b.style.display = 'none');
-            body.innerHTML = `<iframe src="${book.fileData}#toolbar=0" title="PDF"></iframe>`;
-            // For PDF, we track progress via a simple approach
-            updateReaderProgress(book.progress || 0);
-            // Check iframe scroll for progress
-            const iframe = body.querySelector('iframe');
-            iframe.addEventListener('load', () => {
-                try {
-                    // PDF in iframe - limited scroll tracking
-                    setInterval(async () => {
-                        if (currentBookId === id) {
-                            // Approximate: we can't easily track PDF pages in iframe
-                            // but we'll allow manual bookmark
-                        }
-                    }, 5000);
-                } catch(e) {}
-            });
-        } else if (book.format === 'epub') {
-            epubNavBtns.forEach(b => b.style.display = '');
-            body.innerHTML = '<div class="epub-reader-content" id="epubDisplay"><p style="text-align:center;opacity:0.5;">⏳ Cargando...</p></div>';
-            await parseEpub(book.fileData);
-            epubCurrentIdx = book.lastSection || 0;
-            if (epubCurrentIdx >= epubSections.length) epubCurrentIdx = 0;
-            renderEpubSection();
-        }
-
-        document.getElementById('readerScreen').classList.add('active');
-        document.body.style.overflow = 'hidden';
-
-        // Setup scroll tracking for EPUB
-        if (book.format === 'epub') {
-            body.addEventListener('scroll', () => trackEpubProgress());
-        }
-
-    } catch (err) {
-        toast('Error al abrir 😢', 'error');
-        console.error(err);
-    }
-}
-
-function closeReader() {
-    document.getElementById('readerScreen').classList.remove('active');
-    document.getElementById('readerBody').innerHTML = '';
-    document.getElementById('themeSelector').classList.remove('show');
-    document.body.style.overflow = '';
-    currentBookId = null;
-    epubSections = [];
-    epubImages = {};
-}
-
-function updateReaderProgress(pct) {
-    pct = Math.min(100, Math.max(0, Math.round(pct)));
-    document.getElementById('readerProgressFill').style.width = pct + '%';
-    document.getElementById('readerProgressInfo').textContent = pct + '% leído';
-}
-
-async function saveProgress(pct, sectionIdx) {
-    if (!currentBookId) return;
-    const book = await dbGet(currentBookId);
-    if (!book) return;
-    book.progress = Math.round(pct);
-    if (sectionIdx !== undefined) book.lastSection = sectionIdx;
-    await dbPut(book);
-    renderLibrary(); // update cards in background
-}
-
-function trackEpubProgress() {
-    if (epubSections.length === 0) return;
-    const body = document.getElementById('readerBody');
-    const scrollPct = body.scrollTop / (body.scrollHeight - body.clientHeight || 1);
-    const sectionProgress = (epubCurrentIdx + scrollPct) / epubSections.length * 100;
-    updateReaderProgress(sectionProgress);
-    // Debounced save
-    clearTimeout(trackEpubProgress._timer);
-    trackEpubProgress._timer = setTimeout(() => saveProgress(sectionProgress, epubCurrentIdx), 1000);
-}
-
-// ==========================================
-// EPUB PARSER
-// ==========================================
-async function parseEpub(dataUrl) {
-    const base64 = dataUrl.split(',')[1];
-    const bin = atob(base64);
-    const bytes = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-
-    const zip = await unzip(bytes.buffer);
-    epubImages = {};
-
-    // Extract images as data URLs
-    zip.forEach(f => {
-        if (f.name.match(/\.(jpg|jpeg|png|gif|svg|webp)$/i)) {
-            const ext = f.name.split('.').pop().toLowerCase();
-            const mimeMap = {jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',gif:'image/gif',svg:'image/svg+xml',webp:'image/webp'};
-            const mime = mimeMap[ext] || 'image/png';
-            let b64 = '';
-            const chunkSize = 8192;
-            for (let i = 0; i < f.data.length; i += chunkSize) {
-                b64 += String.fromCharCode.apply(null, f.data.subarray(i, i + chunkSize));
-            }
-            epubImages[f.name] = `data:${mime};base64,${btoa(b64)}`;
-            // Also store by basename
-            const baseName = f.name.split('/').pop();
-            epubImages[baseName] = epubImages[f.name];
-        }
-    });
-
-    // Find OPF
-    let opfPath = '';
-    const container = zip.find(f => f.name.endsWith('container.xml'));
-    if (container) {
-        const xml = new TextDecoder().decode(container.data);
-        const m = xml.match(/full-path="([^"]+)"/);
-        if (m) opfPath = m[1];
-    }
-
-    let orderedHrefs = [];
-    let opfDir = '';
-    if (opfPath) {
-        opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : '';
-        const opfFile = zip.find(f => f.name === opfPath);
-        if (opfFile) {
-            const opfXml = new TextDecoder().decode(opfFile.data);
-            // Get spine order
-            const itemMap = {};
-            const manifestItems = [...opfXml.matchAll(/<item\s+[^>]*id="([^"]*)"[^>]*href="([^"]*)"[^>]*media-type="([^"]*)"[^>]*\/?>/g)];
-            // Also try reversed attribute order
-            const manifestItems2 = [...opfXml.matchAll(/<item\s+[^>]*href="([^"]*)"[^>]*id="([^"]*)"[^>]*media-type="([^"]*)"[^>]*\/?>/g)];
-            manifestItems.forEach(m => { if (m[3].includes('html')) itemMap[m[1]] = opfDir + m[2]; });
-            manifestItems2.forEach(m => { if (m[3].includes('html')) itemMap[m[2]] = opfDir + m[1]; });
-
-            const spineItems = [...opfXml.matchAll(/itemref\s+idref="([^"]*)"/g)];
-            spineItems.forEach(s => {
-                if (itemMap[s[1]]) orderedHrefs.push(itemMap[s[1]]);
-            });
-
-            // Fallback if spine didn't work
-            if (orderedHrefs.length === 0) {
-                Object.values(itemMap).forEach(h => orderedHrefs.push(h));
-            }
-        }
-    }
-
-    // Fallback
-    if (orderedHrefs.length === 0) {
-        zip.forEach(f => {
-            if (f.name.match(/\.(xhtml|html|htm)$/i) && !f.name.match(/(toc|nav|cover)/i)) {
-                orderedHrefs.push(f.name);
-            }
-        });
-    }
-
-    epubSections = [];
-    orderedHrefs.forEach(href => {
-        // Try exact match or partial match
-        let file = zip.find(f => f.name === href);
-        if (!file) {
-            const baseName = href.split('/').pop();
-            file = zip.find(f => f.name.endsWith(baseName));
-        }
-        if (file) {
-            let html = new TextDecoder().decode(file.data);
-            const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-            if (bodyMatch) html = bodyMatch[1];
-            html = html.replace(/<script[\s\S]*?<\/script>/gi, '');
-            html = html.replace(/<style[\s\S]*?<\/style>/gi, '');
-            html = html.replace(/<link[^>]*>/gi, '');
-
-            // Replace image src with data URLs
-            html = html.replace(/(src|xlink:href)="([^"]+)"/gi, (match, attr, src) => {
-                const cleanSrc = src.split('/').pop();
-                if (epubImages[src]) return `src="${epubImages[src]}"`;
-                if (epubImages[cleanSrc]) return `src="${epubImages[cleanSrc]}"`;
-                // Try with directory
-                const fullPath = href.substring(0, href.lastIndexOf('/') + 1) + src;
-                if (epubImages[fullPath]) return `src="${epubImages[fullPath]}"`;
-                return match;
-            });
-
-            if (html.trim().length > 20) {
-                epubSections.push(html);
-            }
-        }
-    });
-
-    if (epubSections.length === 0) {
-        epubSections = ['<p style="text-align:center;opacity:0.5;">No se pudo extraer contenido del EPUB 😢</p>'];
-    }
-}
-
-function renderEpubSection() {
-    const display = document.getElementById('epubDisplay');
-    if (!display || epubSections.length === 0) return;
-    display.innerHTML = epubSections[epubCurrentIdx];
-    document.getElementById('readerBody').scrollTop = 0;
-    trackEpubProgress();
-}
-
-function epubPrev() {
-    if (epubCurrentIdx > 0) {
-        epubCurrentIdx--;
-        renderEpubSection();
-    }
-}
-
-function epubNext() {
-    if (epubCurrentIdx < epubSections.length - 1) {
-        epubCurrentIdx++;
-        renderEpubSection();
-    }
-}
-
-// ==========================================
-// THEMES
-// ==========================================
-function toggleThemePanel() {
-    document.getElementById('themeSelector').classList.toggle('show');
-}
-
-function setReaderTheme(theme, btn) {
-    const body = document.getElementById('readerBody');
-    body.className = 'reader-body theme-' + theme;
-    document.querySelectorAll('.theme-option').forEach(o => o.classList.remove('active'));
-    if (btn) btn.classList.add('active');
-    currentReaderTheme = theme;
-}
-
-// ==========================================
-// BOOKMARKS
-// ==========================================
-async function addBookmark() {
-    if (!currentBookId) return;
-
-    let selectedText = '';
-    try {
-        const sel = window.getSelection();
-        selectedText = sel ? sel.toString().trim() : '';
-    } catch(e) {}
-
-    const book = await dbGet(currentBookId);
-    if (!book) return;
-
-    if (!book.bookmarks) book.bookmarks = [];
-
-    const bm = {
-        id: 'bm_' + Date.now(),
-        text: selectedText || '(Sin texto seleccionado)',
-        section: epubCurrentIdx,
-        scrollPos: document.getElementById('readerBody').scrollTop,
-        date: new Date().toISOString(),
-        format: book.format
-    };
-
-    book.bookmarks.push(bm);
-    await dbPut(book);
-
-    // Show toast
-    const bmToast = document.getElementById('bookmarkToast');
-    bmToast.textContent = selectedText
-        ? `🔖 Marcador: "${selectedText.substring(0, 40)}${selectedText.length > 40 ? '...' : ''}"`
-        : '🔖 Marcador guardado';
-    bmToast.classList.add('show');
-    setTimeout(() => bmToast.classList.remove('show'), 2500);
-}
-
-async function toggleBookmarksPanel() {
-    const panel = document.getElementById('bookmarksPanel');
-    const backdrop = document.getElementById('bmBackdrop');
-    const isActive = panel.classList.contains('active');
-
-    if (isActive) {
-        panel.classList.remove('active');
-        backdrop.classList.remove('active');
-    } else {
-        panel.classList.add('active');
-        backdrop.classList.add('active');
-        await renderBookmarksList();
-    }
-}
-
-async function renderBookmarksList() {
-    if (!currentBookId) return;
-    const book = await dbGet(currentBookId);
-    const list = document.getElementById('bookmarksList');
-
-    if (!book || !book.bookmarks || book.bookmarks.length === 0) {
-        list.innerHTML = '<div class="empty-state" style="padding:30px"><div class="empty-icon">🔖</div><h3>Sin marcadores</h3><p>Selecciona texto y toca 🔖 para crear uno</p></div>';
-        return;
-    }
-
-    list.innerHTML = book.bookmarks.map(bm => `
-        <div class="bookmark-item" onclick="goToBookmark(${bm.section}, ${bm.scrollPos})">
-            <div class="bm-text">"${esc(bm.text)}"</div>
-            <div class="bm-meta">
-                <span>Sección ${bm.section + 1} · ${new Date(bm.date).toLocaleDateString()}</span>
-                <button class="bm-delete" onclick="event.stopPropagation(); deleteBookmark('${bm.id}')">✕</button>
-            </div>
-        </div>
-    `).join('');
-}
-
-function goToBookmark(section, scrollPos) {
-    if (epubSections.length > 0 && section < epubSections.length) {
-        epubCurrentIdx = section;
-        renderEpubSection();
-        setTimeout(() => {
-            document.getElementById('readerBody').scrollTop = scrollPos;
-        }, 100);
-    }
-    toggleBookmarksPanel();
-}
-
-async function deleteBookmark(bmId) {
-    const book = await dbGet(currentBookId);
-    if (!book) return;
-    book.bookmarks = (book.bookmarks || []).filter(b => b.id !== bmId);
-    await dbPut(book);
-    renderBookmarksList();
-    toast('Marcador eliminado', 'info');
-}
-
-// ==========================================
-// ZIP PARSER
-// ==========================================
-async function unzip(buffer) {
-    const view = new DataView(buffer);
-    const u8 = new Uint8Array(buffer);
-    const files = [];
-    let off = 0;
-
-    while (off < buffer.byteLength - 4) {
-        if (view.getUint32(off, true) !== 0x04034b50) break;
-
-        const method = view.getUint16(off + 8, true);
-        let compSize = view.getUint32(off + 18, true);
-        const uncompSize = view.getUint32(off + 22, true);
-        const nameLen = view.getUint16(off + 26, true);
-        const extraLen = view.getUint16(off + 28, true);
-        const gpFlag = view.getUint16(off + 6, true);
-
-        const name = new TextDecoder().decode(u8.slice(off + 30, off + 30 + nameLen));
-        const dataStart = off + 30 + nameLen + extraLen;
-
-        // Handle data descriptor (bit 3 of general purpose flag)
-        if ((gpFlag & 0x08) && compSize === 0) {
-            // Need to find the data descriptor
-            let searchOff = dataStart;
-            while (searchOff < buffer.byteLength - 16) {
-                if (view.getUint32(searchOff, true) === 0x08074b50 ||
-                    view.getUint32(searchOff, true) === 0x04034b50) {
-                    break;
-                }
-                searchOff++;
-            }
-            if (view.getUint32(searchOff, true) === 0x08074b50) {
-                compSize = view.getUint32(searchOff + 8, true);
-            } else {
-                compSize = searchOff - dataStart;
-            }
-        }
-
-        const dataEnd = dataStart + compSize;
-
-        if (!name.endsWith('/') && compSize > 0) {
-            let fileData;
-            if (method === 0) {
-                fileData = u8.slice(dataStart, dataEnd);
-            } else if (method === 8) {
-                try {
-                    const compressed = u8.slice(dataStart, dataEnd);
-                    const ds = new DecompressionStream('raw-deflate');
-                    const writer = ds.writable.getWriter();
-                    const reader = ds.readable.getReader();
-                    writer.write(compressed);
-                    writer.close();
-                    const chunks = [];
-                    let total = 0;
-                    while (true) {
-                        const { done, value } = await reader.read();
-                        if (done) break;
-                        chunks.push(value);
-                        total += value.length;
-                    }
-                    fileData = new Uint8Array(total);
-                    let pos = 0;
-                    chunks.forEach(c => { fileData.set(c, pos); pos += c.length; });
-                } catch (e) {
-                    fileData = u8.slice(dataStart, dataEnd);
-                }
-            } else {
-                fileData = u8.slice(dataStart, dataEnd);
-            }
-            files.push({ name, data: fileData });
-        }
-
-        off = dataEnd;
-        // Skip data descriptor if present
-        if ((gpFlag & 0x08) && off < buffer.byteLength - 4) {
-            if (view.getUint32(off, true) === 0x08074b50) off += 16;
-        }
-    }
-    return files;
-}
-
-// ==========================================
-// UTILITIES
-// ==========================================
-function fmtSize(bytes) {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / 1048576).toFixed(1) + ' MB';
-}
-
-function esc(text) {
-    const d = document.createElement('div');
-    d.textContent = text || '';
-    return d.innerHTML;
-}
-
-// ==========================================
-// INIT
-// ==========================================
-(async () => {
-    initSplash();
-    try {
-        await openDB();
-        renderLibrary();
-    } catch (err) {
-        console.error('DB Error:', err);
-        toast('Error al iniciar 😢', 'error');
-    }
-})();
-</script>
-</body>
-</html>
+        g.innerHTML=books.map(b=>{
+            const p=Math.round(b.progress||0);
+            const c=2*Math.PI*14;const o=c-(p/100)*c;
+            return `<div class="card 
